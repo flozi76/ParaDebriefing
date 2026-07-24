@@ -79,6 +79,7 @@ type DebriefEntry = {
 };
 
 const STORAGE_KEY = 'paradebriefing.entries';
+const DEFAULT_LOCATION = 'Aktueller Standort';
 
 const createEmptyForm = (): DebriefForm => ({
   thumb: '',
@@ -98,12 +99,13 @@ const createDefaultMetaForm = (): DebriefMetaForm => {
   return {
     flightDate: formatDateInput(now),
     flightTime: formatTimeInput(now),
-    location: 'Aktueller Standort',
+    location: DEFAULT_LOCATION,
     externalLink: '',
   };
 };
 
 const parseLegacyCreatedAt = (createdAt: string) => {
+  // Supports previously stored locale values like "24.07.2026, 14:35:12".
   const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4}),?\s+(\d{1,2}):(\d{2})/.exec(
     createdAt,
   );
@@ -296,11 +298,23 @@ export default function App() {
       return;
     }
 
-    if (!/^https?:\/\//i.test(normalizedUrl)) {
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(normalizedUrl);
+    } catch {
       return;
     }
 
-    await Linking.openURL(normalizedUrl);
+    if (!/^https?:$/i.test(parsedUrl.protocol)) {
+      return;
+    }
+
+    const canOpen = await Linking.canOpenURL(parsedUrl.toString());
+    if (!canOpen) {
+      return;
+    }
+
+    await Linking.openURL(parsedUrl.toString());
   };
 
   const saveDebrief = () => {
@@ -315,7 +329,7 @@ export default function App() {
     const trimmedMeta: DebriefMetaForm = {
       flightDate: metaForm.flightDate.trim(),
       flightTime: metaForm.flightTime.trim(),
-      location: metaForm.location.trim() || 'Aktueller Standort',
+      location: metaForm.location.trim() || DEFAULT_LOCATION,
       externalLink: metaForm.externalLink.trim(),
     };
 
@@ -415,7 +429,7 @@ export default function App() {
                     </View>
                     {entry.meta.externalLink ? (
                       <Pressable
-                        accessibilityLabel={`Externen Link vom Flug am ${entry.meta.flightDate} öffnen`}
+                        accessibilityLabel={`Externen Link vom Flug am ${toOverviewDate(entry.meta.flightDate, entry.meta.flightTime)} öffnen`}
                         accessibilityRole="button"
                         onPress={() => {
                           void openExternalLink(entry.meta.externalLink);
@@ -429,7 +443,7 @@ export default function App() {
                       </Pressable>
                     ) : null}
                     <Pressable
-                      accessibilityLabel={`Debriefing vom ${entry.meta.flightDate} bearbeiten`}
+                      accessibilityLabel={`Debriefing vom ${toOverviewDate(entry.meta.flightDate, entry.meta.flightTime)} bearbeiten`}
                       accessibilityRole="button"
                       onPress={() => openEditDialog(entry)}
                       style={({ pressed }) => [
@@ -488,6 +502,7 @@ export default function App() {
                     value={metaForm.flightDate}
                     onChangeText={(value) => updateMetaField('flightDate', value)}
                     autoCapitalize="none"
+                    keyboardType="numbers-and-punctuation"
                   />
                   <TextInput
                     placeholder="Uhrzeit (HH:MM)"
@@ -496,6 +511,7 @@ export default function App() {
                     value={metaForm.flightTime}
                     onChangeText={(value) => updateMetaField('flightTime', value)}
                     autoCapitalize="none"
+                    keyboardType="numbers-and-punctuation"
                   />
                   <TextInput
                     placeholder="Standort"
