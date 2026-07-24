@@ -1,3 +1,6 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
@@ -94,6 +97,18 @@ const formatDateInput = (date: Date) => date.toISOString().slice(0, 10);
 
 const formatTimeInput = (date: Date) => date.toTimeString().slice(0, 5);
 
+const combineDateAndTime = (date: string, time: string): Date => {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const timeMatch = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(time);
+  const now = new Date();
+  const year = dateMatch ? Number(dateMatch[1]) : now.getFullYear();
+  const month = dateMatch ? Number(dateMatch[2]) - 1 : now.getMonth();
+  const day = dateMatch ? Number(dateMatch[3]) : now.getDate();
+  const hours = timeMatch ? Number(timeMatch[1]) : now.getHours();
+  const minutes = timeMatch ? Number(timeMatch[2]) : now.getMinutes();
+  return new Date(year, month, day, hours, minutes, 0, 0);
+};
+
 const createDefaultMetaForm = (): DebriefMetaForm => {
   const now = new Date();
 
@@ -171,11 +186,6 @@ const toOverviewDate = (date: string, time: string) => {
   return `${day}.${month}.${year} · ${normalizedTime}`;
 };
 
-const isValidDateInput = (date: string) =>
-  !toOverviewDate(date, '').startsWith('Unbekanntes Datum');
-
-const isValidTimeInput = (time: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
-
 function HandIcon({
   activeParts,
 }: {
@@ -242,6 +252,9 @@ export default function App() {
   const [hasLoadedEntries, setHasLoadedEntries] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerStep, setPickerStep] = useState<'date' | 'time'>('date');
+  const [pendingDate, setPendingDate] = useState<Date>(new Date);
 
   useEffect(() => {
     const loadEntries = async () => {
@@ -314,6 +327,38 @@ export default function App() {
     setErrorMessage('');
   };
 
+  const openDateTimePicker = () => {
+    setPendingDate(combineDateAndTime(metaForm.flightDate, metaForm.flightTime));
+    setPickerStep('date');
+    setShowPicker(true);
+  };
+
+  const onPickerChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
+      if (event.type === 'dismissed' || !selectedDate) {
+        return;
+      }
+      if (pickerStep === 'date') {
+        setPendingDate(selectedDate);
+        updateMetaField('flightDate', formatDateInput(selectedDate));
+        setPickerStep('time');
+        setShowPicker(true);
+      } else {
+        const combined = new Date(pendingDate);
+        combined.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
+        updateMetaField('flightTime', formatTimeInput(combined));
+        setPickerStep('date');
+      }
+    } else {
+      if (selectedDate) {
+        setPendingDate(selectedDate);
+        updateMetaField('flightDate', formatDateInput(selectedDate));
+        updateMetaField('flightTime', formatTimeInput(selectedDate));
+      }
+    }
+  };
+
   const openExternalLink = async (url: string) => {
     const normalizedUrl = url.trim();
     const errorText = 'Externer Link konnte nicht geöffnet werden.';
@@ -354,16 +399,6 @@ export default function App() {
   const saveDebrief = () => {
     if (!isComplete) {
       setErrorMessage('Bitte alle fünf Finger ausfüllen.');
-      return;
-    }
-
-    if (!isValidDateInput(metaForm.flightDate.trim())) {
-      setErrorMessage('Bitte Datum im Format YYYY-MM-DD eingeben.');
-      return;
-    }
-
-    if (!isValidTimeInput(metaForm.flightTime.trim())) {
-      setErrorMessage('Bitte Uhrzeit im Format HH:MM eingeben.');
       return;
     }
 
@@ -544,26 +579,49 @@ export default function App() {
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.metaFieldsCard}>
-                  <TextInput
-                    accessibilityLabel="Flugdatum"
-                    placeholder="Datum (YYYY-MM-DD)"
-                    placeholderTextColor="#7a8da3"
-                    style={styles.metaInput}
-                    value={metaForm.flightDate}
-                    onChangeText={(value) => updateMetaField('flightDate', value)}
-                    autoCapitalize="none"
-                    keyboardType="numbers-and-punctuation"
-                  />
-                  <TextInput
-                    accessibilityLabel="Flugzeit"
-                    placeholder="Uhrzeit (HH:MM)"
-                    placeholderTextColor="#7a8da3"
-                    style={styles.metaInput}
-                    value={metaForm.flightTime}
-                    onChangeText={(value) => updateMetaField('flightTime', value)}
-                    autoCapitalize="none"
-                    keyboardType="numbers-and-punctuation"
-                  />
+                  <Pressable
+                    accessibilityLabel="Flugdatum und -uhrzeit"
+                    accessibilityRole="button"
+                    onPress={openDateTimePicker}
+                    style={({ pressed }) => [
+                      styles.metaDateButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text style={styles.metaDateButtonText}>
+                      {toOverviewDate(metaForm.flightDate, metaForm.flightTime)}
+                    </Text>
+                  </Pressable>
+                  {showPicker && (
+                    Platform.OS === 'ios' ? (
+                      <View>
+                        <DateTimePicker
+                          value={pendingDate}
+                          mode="datetime"
+                          display="spinner"
+                          onChange={onPickerChange}
+                          locale="de-DE"
+                        />
+                        <Pressable
+                          accessibilityRole="button"
+                          onPress={() => setShowPicker(false)}
+                          style={({ pressed }) => [
+                            styles.pickerDoneButton,
+                            pressed && styles.buttonPressed,
+                          ]}
+                        >
+                          <Text style={styles.pickerDoneButtonText}>Fertig</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <DateTimePicker
+                        value={pendingDate}
+                        mode={pickerStep}
+                        display="default"
+                        onChange={onPickerChange}
+                      />
+                    )
+                  )}
                   <TextInput
                     accessibilityLabel="Flugort"
                     placeholder="Standort"
@@ -738,6 +796,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fbfd',
     fontSize: 15,
     color: '#17324b',
+  },
+  metaDateButton: {
+    borderWidth: 1,
+    borderColor: '#c7d7e7',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#f9fbfd',
+  },
+  metaDateButtonText: {
+    fontSize: 15,
+    color: '#17324b',
+    fontWeight: '600',
+  },
+  pickerDoneButton: {
+    alignSelf: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  pickerDoneButtonText: {
+    fontSize: 16,
+    color: '#0f6cbd',
+    fontWeight: '700',
   },
   error: {
     color: '#b42318',
