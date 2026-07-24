@@ -1,3 +1,4 @@
+import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
@@ -74,6 +75,7 @@ export default function App() {
   const [form, setForm] = useState<DebriefForm>(createEmptyForm);
   const [entries, setEntries] = useState<DebriefEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
+  const [storageMessage, setStorageMessage] = useState('');
   const [hasLoadedEntries, setHasLoadedEntries] = useState(false);
 
   useEffect(() => {
@@ -89,6 +91,9 @@ export default function App() {
         setEntries(parsedEntries);
       } catch {
         await AsyncStorage.removeItem(STORAGE_KEY);
+        setStorageMessage(
+          'Gespeicherte Debriefings konnten nicht geladen werden und wurden zurückgesetzt.',
+        );
       } finally {
         setHasLoadedEntries(true);
       }
@@ -127,7 +132,7 @@ export default function App() {
 
     setEntries((current) => [
       {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        id: Crypto.randomUUID(),
         createdAt: new Date().toLocaleString('de-DE'),
         responses: trimmedResponses,
       },
@@ -153,6 +158,9 @@ export default function App() {
             <Text style={styles.subtitle}>
               Fünf-Finger-Debriefing nach dem Flug direkt auf Android und iPhone.
             </Text>
+            {storageMessage ? (
+              <Text style={styles.storageMessage}>{storageMessage}</Text>
+            ) : null}
           </View>
 
           <View style={styles.card}>
@@ -284,6 +292,10 @@ const styles = StyleSheet.create({
   },
   error: {
     color: '#b42318',
+    fontWeight: '600',
+  },
+  storageMessage: {
+    color: '#9a6700',
     fontWeight: '600',
   },
   button: {
