@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Linking,
   Modal,
   Platform,
   Pressable,
@@ -63,9 +64,17 @@ const FINGER_FIELDS = [
 type FingerKey = (typeof FINGER_FIELDS)[number]['key'];
 type DebriefForm = Record<FingerKey, string>;
 
+type DebriefMetaForm = {
+  flightDate: string;
+  flightTime: string;
+  location: string;
+  externalLink: string;
+};
+
 type DebriefEntry = {
   id: string;
   createdAt: string;
+  meta: DebriefMetaForm;
   responses: DebriefForm;
 };
 
@@ -78,6 +87,70 @@ const createEmptyForm = (): DebriefForm => ({
   ring: '',
   little: '',
 });
+
+const formatDateInput = (date: Date) => date.toISOString().slice(0, 10);
+
+const formatTimeInput = (date: Date) => date.toTimeString().slice(0, 5);
+
+const createDefaultMetaForm = (): DebriefMetaForm => {
+  const now = new Date();
+
+  return {
+    flightDate: formatDateInput(now),
+    flightTime: formatTimeInput(now),
+    location: 'Aktueller Standort',
+    externalLink: '',
+  };
+};
+
+const parseLegacyCreatedAt = (createdAt: string) => {
+  const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4}),?\s+(\d{1,2}):(\d{2})/.exec(
+    createdAt,
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const [, day, month, year, hours, minutes] = match;
+
+  return {
+    flightDate: `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`,
+    flightTime: `${hours.padStart(2, '0')}:${minutes}`,
+  };
+};
+
+const normalizeEntry = (entry: DebriefEntry): DebriefEntry => {
+  const parsedDateTime = parseLegacyCreatedAt(entry.createdAt);
+  const fallbackMeta = createDefaultMetaForm();
+
+  return {
+    ...entry,
+    meta: {
+      flightDate:
+        entry.meta?.flightDate ??
+        parsedDateTime?.flightDate ??
+        fallbackMeta.flightDate,
+      flightTime:
+        entry.meta?.flightTime ??
+        parsedDateTime?.flightTime ??
+        fallbackMeta.flightTime,
+      location: entry.meta?.location ?? fallbackMeta.location,
+      externalLink: entry.meta?.externalLink ?? '',
+    },
+  };
+};
+
+const toOverviewDate = (date: string, time: string) => {
+  const normalizedTime = time.trim() || '--:--';
+  const [year, month, day] = date.split('-');
+
+  if (!year || !month || !day) {
+    return `${date} · ${normalizedTime}`;
+  }
+
+  return `${day}.${month}.${year} · ${normalizedTime}`;
+};
 
 function HandIcon({
   activeParts,
@@ -138,6 +211,7 @@ function HandIcon({
 
 export default function App() {
   const [form, setForm] = useState<DebriefForm>(createEmptyForm);
+  const [metaForm, setMetaForm] = useState<DebriefMetaForm>(createDefaultMetaForm);
   const [entries, setEntries] = useState<DebriefEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [storageMessage, setStorageMessage] = useState('');
@@ -155,7 +229,7 @@ export default function App() {
         }
 
         const parsedEntries = JSON.parse(storedEntries) as DebriefEntry[];
-        setEntries(parsedEntries);
+        setEntries(parsedEntries.map(normalizeEntry));
       } catch {
         await AsyncStorage.removeItem(STORAGE_KEY);
         setStorageMessage(
@@ -191,12 +265,14 @@ export default function App() {
     setIsDialogVisible(false);
     setEditingEntryId(null);
     setForm(createEmptyForm());
+    setMetaForm(createDefaultMetaForm());
     setErrorMessage('');
   };
 
   const openCreateDialog = () => {
     setEditingEntryId(null);
     setForm(createEmptyForm());
+    setMetaForm(createDefaultMetaForm());
     setErrorMessage('');
     setIsDialogVisible(true);
   };
@@ -204,8 +280,27 @@ export default function App() {
   const openEditDialog = (entry: DebriefEntry) => {
     setEditingEntryId(entry.id);
     setForm(entry.responses);
+    setMetaForm(entry.meta);
     setErrorMessage('');
     setIsDialogVisible(true);
+  };
+
+  const updateMetaField = (field: keyof DebriefMetaForm, value: string) => {
+    setMetaForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const openExternalLink = async (url: string) => {
+    const normalizedUrl = url.trim();
+
+    if (!normalizedUrl) {
+      return;
+    }
+
+    if (!/^https?:\/\//i.test(normalizedUrl)) {
+      return;
+    }
+
+    await Linking.openURL(normalizedUrl);
   };
 
   const saveDebrief = () => {
@@ -217,12 +312,18 @@ export default function App() {
     const trimmedResponses = Object.fromEntries(
       Object.entries(form).map(([key, value]) => [key, value.trim()]),
     ) as DebriefForm;
+    const trimmedMeta: DebriefMetaForm = {
+      flightDate: metaForm.flightDate.trim(),
+      flightTime: metaForm.flightTime.trim(),
+      location: metaForm.location.trim() || 'Aktueller Standort',
+      externalLink: metaForm.externalLink.trim(),
+    };
 
     if (editingEntryId) {
       setEntries((current) =>
         current.map((entry) =>
           entry.id === editingEntryId
-            ? { ...entry, responses: trimmedResponses }
+            ? { ...entry, meta: trimmedMeta, responses: trimmedResponses }
             : entry,
         ),
       );
@@ -231,6 +332,7 @@ export default function App() {
         {
           id: Crypto.randomUUID(),
           createdAt: new Date().toLocaleString('de-DE'),
+          meta: trimmedMeta,
           responses: trimmedResponses,
         },
         ...current,
@@ -302,9 +404,32 @@ export default function App() {
               entries.map((entry) => (
                 <View key={entry.id} style={styles.entryCard}>
                   <View style={styles.entryTopRow}>
-                    <Text style={styles.entryDate}>{entry.createdAt}</Text>
+                    <View style={styles.entryOverviewRow}>
+                      <Text style={styles.entryDate}>
+                        {toOverviewDate(
+                          entry.meta.flightDate,
+                          entry.meta.flightTime,
+                        )}
+                      </Text>
+                      <Text style={styles.entryLocation}>{entry.meta.location}</Text>
+                    </View>
+                    {entry.meta.externalLink ? (
+                      <Pressable
+                        accessibilityLabel={`Externen Link vom Flug am ${entry.meta.flightDate} öffnen`}
+                        accessibilityRole="button"
+                        onPress={() => {
+                          void openExternalLink(entry.meta.externalLink);
+                        }}
+                        style={({ pressed }) => [
+                          styles.linkButton,
+                          pressed && styles.buttonPressed,
+                        ]}
+                      >
+                        <Text style={styles.linkButtonText}>Link</Text>
+                      </Pressable>
+                    ) : null}
                     <Pressable
-                      accessibilityLabel={`Debriefing vom ${entry.createdAt} bearbeiten`}
+                      accessibilityLabel={`Debriefing vom ${entry.meta.flightDate} bearbeiten`}
                       accessibilityRole="button"
                       onPress={() => openEditDialog(entry)}
                       style={({ pressed }) => [
@@ -315,17 +440,6 @@ export default function App() {
                       <Text style={styles.editButtonText}>Bearbeiten</Text>
                     </Pressable>
                   </View>
-                  {FINGER_FIELDS.map((field) => (
-                    <View key={field.key} style={styles.entrySection}>
-                      <View style={styles.entryHeader}>
-                        <HandIcon activeParts={field.activeParts} />
-                        <Text style={styles.entryLabel}>{field.title}</Text>
-                      </View>
-                      <Text style={styles.entryText}>
-                        {entry.responses[field.key]}
-                      </Text>
-                    </View>
-                  ))}
                 </View>
               ))
             )}
@@ -366,6 +480,41 @@ export default function App() {
                 contentContainerStyle={styles.modalContent}
                 keyboardShouldPersistTaps="handled"
               >
+                <View style={styles.metaFieldsCard}>
+                  <TextInput
+                    placeholder="Datum (YYYY-MM-DD)"
+                    placeholderTextColor="#7a8da3"
+                    style={styles.metaInput}
+                    value={metaForm.flightDate}
+                    onChangeText={(value) => updateMetaField('flightDate', value)}
+                    autoCapitalize="none"
+                  />
+                  <TextInput
+                    placeholder="Uhrzeit (HH:MM)"
+                    placeholderTextColor="#7a8da3"
+                    style={styles.metaInput}
+                    value={metaForm.flightTime}
+                    onChangeText={(value) => updateMetaField('flightTime', value)}
+                    autoCapitalize="none"
+                  />
+                  <TextInput
+                    placeholder="Standort"
+                    placeholderTextColor="#7a8da3"
+                    style={styles.metaInput}
+                    value={metaForm.location}
+                    onChangeText={(value) => updateMetaField('location', value)}
+                  />
+                  <TextInput
+                    placeholder="Optionaler Link (z.B. XContest)"
+                    placeholderTextColor="#7a8da3"
+                    style={styles.metaInput}
+                    value={metaForm.externalLink}
+                    onChangeText={(value) => updateMetaField('externalLink', value)}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+
                 {FINGER_FIELDS.map((field) => (
                   <View key={field.key} style={styles.fieldGroup}>
                     <View style={styles.fieldHeader}>
@@ -508,6 +657,19 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     color: '#17324b',
   },
+  metaFieldsCard: {
+    gap: 10,
+  },
+  metaInput: {
+    borderWidth: 1,
+    borderColor: '#c7d7e7',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#f9fbfd',
+    fontSize: 15,
+    color: '#17324b',
+  },
   error: {
     color: '#b42318',
     fontWeight: '600',
@@ -570,27 +732,35 @@ const styles = StyleSheet.create({
   },
   entryTopRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 12,
+    flexWrap: 'wrap',
   },
-  entrySection: {
-    gap: 4,
-  },
-  entryHeader: {
+  entryOverviewRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    flex: 1,
+    minWidth: 220,
   },
-  entryLabel: {
+  entryLocation: {
+    fontSize: 14,
+    color: '#415a73',
+    flexShrink: 1,
+  },
+  linkButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#95c6ef',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#edf6ff',
+  },
+  linkButtonText: {
+    color: '#0f4c81',
     fontSize: 14,
     fontWeight: '700',
-    color: '#12304a',
-  },
-  entryText: {
-    fontSize: 15,
-    lineHeight: 21,
-    color: '#415a73',
   },
   iconButton: {
     width: 48,
