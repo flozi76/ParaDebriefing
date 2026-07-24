@@ -254,7 +254,7 @@ export default function App() {
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
   const [pickerStep, setPickerStep] = useState<'date' | 'time'>('date');
-  const [pendingDate, setPendingDate] = useState<Date>(new Date);
+  const [pendingDate, setPendingDate] = useState<Date>(new Date());
 
   useEffect(() => {
     const loadEntries = async () => {
