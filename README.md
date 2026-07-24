@@ -4,8 +4,9 @@ Cross-platform Expo app for a five-fingers paragliding debriefing after each fli
 
 ## Features
 
-- Capture one debriefing per flight across all five fingers
-- Show a running list of recorded debriefings directly in the app
+- Open directly into the saved debriefing list for quicker access
+- Capture one debriefing per flight across all five fingers via a dialog
+- Edit existing debriefings directly from the list
 - Runs from one React Native codebase for Android and iPhone
 
 ## Run locally

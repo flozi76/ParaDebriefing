@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   SafeAreaView,
@@ -136,6 +137,8 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [storageMessage, setStorageMessage] = useState('');
   const [hasLoadedEntries, setHasLoadedEntries] = useState(false);
+  const [isDialogVisible, setIsDialogVisible] = useState(false);
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadEntries = async () => {
@@ -179,6 +182,27 @@ export default function App() {
     setErrorMessage('');
   };
 
+  const closeDialog = () => {
+    setIsDialogVisible(false);
+    setEditingEntryId(null);
+    setForm(createEmptyForm());
+    setErrorMessage('');
+  };
+
+  const openCreateDialog = () => {
+    setEditingEntryId(null);
+    setForm(createEmptyForm());
+    setErrorMessage('');
+    setIsDialogVisible(true);
+  };
+
+  const openEditDialog = (entry: DebriefEntry) => {
+    setEditingEntryId(entry.id);
+    setForm(entry.responses);
+    setErrorMessage('');
+    setIsDialogVisible(true);
+  };
+
   const saveDebrief = () => {
     if (!isComplete) {
       setErrorMessage('Bitte alle fünf Finger ausfüllen.');
@@ -189,16 +213,26 @@ export default function App() {
       Object.entries(form).map(([key, value]) => [key, value.trim()]),
     ) as DebriefForm;
 
-    setEntries((current) => [
-      {
-        id: Crypto.randomUUID(),
-        createdAt: new Date().toLocaleString('de-DE'),
-        responses: trimmedResponses,
-      },
-      ...current,
-    ]);
-    setForm(createEmptyForm());
-    setErrorMessage('');
+    if (editingEntryId) {
+      setEntries((current) =>
+        current.map((entry) =>
+          entry.id === editingEntryId
+            ? { ...entry, responses: trimmedResponses }
+            : entry,
+        ),
+      );
+    } else {
+      setEntries((current) => [
+        {
+          id: Crypto.randomUUID(),
+          createdAt: new Date().toLocaleString('de-DE'),
+          responses: trimmedResponses,
+        },
+        ...current,
+      ]);
+    }
+
+    closeDialog();
   };
 
   return (
@@ -213,51 +247,28 @@ export default function App() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Text style={styles.title}>ParaDebriefing</Text>
-            <Text style={styles.subtitle}>
-              Fünf-Finger-Debriefing nach dem Flug direkt auf Android und iPhone.
-            </Text>
+            <View style={styles.headerRow}>
+              <View style={styles.headerTextGroup}>
+                <Text style={styles.title}>ParaDebriefing</Text>
+                <Text style={styles.subtitle}>
+                  Fünf-Finger-Debriefing nach dem Flug direkt auf Android und iPhone.
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Neues Debriefing"
+                accessibilityRole="button"
+                onPress={openCreateDialog}
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.iconButtonText}>+</Text>
+              </Pressable>
+            </View>
             {storageMessage ? (
               <Text style={styles.storageMessage}>{storageMessage}</Text>
             ) : null}
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Neues Debriefing</Text>
-            {FINGER_FIELDS.map((field) => (
-              <View key={field.key} style={styles.fieldGroup}>
-                <View style={styles.fieldHeader}>
-                  <HandIcon activeParts={field.activeParts} />
-                  <View style={styles.fieldLabelGroup}>
-                    <Text style={styles.fieldLabel}>{field.title}</Text>
-                    <Text style={styles.fieldPrompt}>{field.prompt}</Text>
-                  </View>
-                </View>
-                <TextInput
-                  multiline
-                  numberOfLines={4}
-                  placeholder={field.placeholder}
-                  placeholderTextColor="#7a8da3"
-                  style={styles.input}
-                  value={form[field.key]}
-                  onChangeText={(value) => updateField(field.key, value)}
-                  textAlignVertical="top"
-                />
-              </View>
-            ))}
-
-            {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
-
-            <Pressable
-              accessibilityRole="button"
-              onPress={saveDebrief}
-              style={({ pressed }) => [
-                styles.button,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text style={styles.buttonText}>Debriefing speichern</Text>
-            </Pressable>
           </View>
 
           <View style={styles.card}>
@@ -267,13 +278,38 @@ export default function App() {
             </View>
 
             {entries.length === 0 ? (
-              <Text style={styles.emptyState}>
-                Noch kein Debriefing gespeichert. Erfasse nach deinem nächsten Flug alle fünf Finger.
-              </Text>
+              <View style={styles.emptyStateGroup}>
+                <Text style={styles.emptyState}>
+                  Noch kein Debriefing gespeichert. Tippe auf Plus, um nach deinem nächsten Flug alle fünf Finger zu erfassen.
+                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={openCreateDialog}
+                  style={({ pressed }) => [
+                    styles.secondaryButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text style={styles.secondaryButtonText}>Debriefing anlegen</Text>
+                </Pressable>
+              </View>
             ) : (
               entries.map((entry) => (
                 <View key={entry.id} style={styles.entryCard}>
-                  <Text style={styles.entryDate}>{entry.createdAt}</Text>
+                  <View style={styles.entryTopRow}>
+                    <Text style={styles.entryDate}>{entry.createdAt}</Text>
+                    <Pressable
+                      accessibilityLabel={`Debriefing vom ${entry.createdAt} bearbeiten`}
+                      accessibilityRole="button"
+                      onPress={() => openEditDialog(entry)}
+                      style={({ pressed }) => [
+                        styles.editButton,
+                        pressed && styles.buttonPressed,
+                      ]}
+                    >
+                      <Text style={styles.editButtonText}>Bearbeiten</Text>
+                    </Pressable>
+                  </View>
                   {FINGER_FIELDS.map((field) => (
                     <View key={field.key} style={styles.entrySection}>
                       <View style={styles.entryHeader}>
@@ -291,6 +327,94 @@ export default function App() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal
+        animationType="slide"
+        onRequestClose={closeDialog}
+        transparent
+        visible={isDialogVisible}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={styles.modalWrapper}
+          >
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.sectionTitle}>
+                  {editingEntryId ? 'Debriefing bearbeiten' : 'Neues Debriefing'}
+                </Text>
+                <Pressable
+                  accessibilityLabel="Dialog schließen"
+                  accessibilityRole="button"
+                  onPress={closeDialog}
+                  style={({ pressed }) => [
+                    styles.closeButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </Pressable>
+              </View>
+
+              <ScrollView
+                contentContainerStyle={styles.modalContent}
+                keyboardShouldPersistTaps="handled"
+              >
+                {FINGER_FIELDS.map((field) => (
+                  <View key={field.key} style={styles.fieldGroup}>
+                    <View style={styles.fieldHeader}>
+                      <HandIcon activeParts={field.activeParts} />
+                      <View style={styles.fieldLabelGroup}>
+                        <Text style={styles.fieldLabel}>{field.title}</Text>
+                        <Text style={styles.fieldPrompt}>{field.prompt}</Text>
+                      </View>
+                    </View>
+                    <TextInput
+                      multiline
+                      numberOfLines={4}
+                      placeholder={field.placeholder}
+                      placeholderTextColor="#7a8da3"
+                      style={styles.input}
+                      value={form[field.key]}
+                      onChangeText={(value) => updateField(field.key, value)}
+                      textAlignVertical="top"
+                    />
+                  </View>
+                ))}
+
+                {errorMessage ? <Text style={styles.error}>{errorMessage}</Text> : null}
+
+                <View style={styles.dialogActions}>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={closeDialog}
+                    style={({ pressed }) => [
+                      styles.secondaryButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text style={styles.secondaryButtonText}>Abbrechen</Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={saveDebrief}
+                    style={({ pressed }) => [
+                      styles.button,
+                      styles.dialogPrimaryButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text style={styles.buttonText}>
+                      {editingEntryId ? 'Änderungen speichern' : 'Debriefing speichern'}
+                    </Text>
+                  </Pressable>
+                </View>
+              </ScrollView>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -310,6 +434,15 @@ const styles = StyleSheet.create({
   header: {
     gap: 8,
     paddingTop: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 16,
+  },
+  headerTextGroup: {
+    flex: 1,
+    gap: 8,
   },
   title: {
     fontSize: 30,
@@ -382,6 +515,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f6cbd',
     borderRadius: 999,
     paddingVertical: 14,
+    paddingHorizontal: 20,
     alignItems: 'center',
   },
   buttonPressed: {
@@ -413,6 +547,9 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     color: '#587086',
   },
+  emptyStateGroup: {
+    gap: 14,
+  },
   entryCard: {
     borderWidth: 1,
     borderColor: '#d6e2ee',
@@ -425,6 +562,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#1f4668',
+  },
+  entryTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
   },
   entrySection: {
     gap: 4,
@@ -443,6 +586,96 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
     color: '#415a73',
+  },
+  iconButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 999,
+    backgroundColor: '#0f6cbd',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  iconButtonText: {
+    color: '#ffffff',
+    fontSize: 28,
+    lineHeight: 28,
+    fontWeight: '700',
+  },
+  secondaryButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#c7d7e7',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+  secondaryButtonText: {
+    color: '#1f4668',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  editButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#c7d7e7',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#ffffff',
+  },
+  editButtonText: {
+    color: '#1f4668',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(18, 48, 74, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalWrapper: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    maxHeight: '92%',
+    backgroundColor: '#eef5fb',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 16,
+    paddingBottom: 24,
+    gap: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#dbeafe',
+  },
+  closeButtonText: {
+    color: '#12304a',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalContent: {
+    gap: 14,
+    paddingBottom: 12,
+  },
+  dialogActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  dialogPrimaryButton: {
+    flex: 1,
   },
   handIcon: {
     width: 48,
