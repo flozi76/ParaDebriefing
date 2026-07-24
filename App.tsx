@@ -518,7 +518,7 @@ export default function App() {
       >
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.modalWrapper}
           >
             <View style={styles.modalCard}>
