@@ -46,3 +46,5 @@ export const FINGER_FIELDS = [
 export const STORAGE_KEY = 'paradebriefing.entries';
 export const DEFAULT_LOCATION = 'Aktueller Standort';
 export const MIN_OVERVIEW_ROW_WIDTH = 220;
+// Alps region – central paragliding area
+export const FALLBACK_COORDS = { lat: 47.5, lon: 11.5 };

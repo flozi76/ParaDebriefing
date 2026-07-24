@@ -11,6 +11,7 @@ import {
 
 import { DebriefDialog } from './src/components/DebriefDialog';
 import { EntryCard } from './src/components/EntryCard';
+import { LocationPickerModal } from './src/components/LocationPickerModal';
 import { useDebriefing } from './src/hooks/useDebriefing';
 import { styles } from './src/styles/styles';
 
@@ -23,6 +24,9 @@ export default function App() {
     storageMessage,
     isDialogVisible,
     isEditing,
+    isLocationPickerVisible,
+    locationPickerCoords,
+    isLoadingLocation,
     showPicker,
     pickerStep,
     pendingDate,
@@ -32,6 +36,9 @@ export default function App() {
     openCreateDialog,
     openEditDialog,
     openDateTimePicker,
+    openLocationPicker,
+    closeLocationPicker,
+    handleLocationPickerConfirm,
     onPickerChange,
     onPickerDone,
     openExternalLink,
@@ -118,6 +125,7 @@ export default function App() {
         form={form}
         metaForm={metaForm}
         errorMessage={errorMessage}
+        isLoadingLocation={isLoadingLocation}
         showPicker={showPicker}
         pickerStep={pickerStep}
         pendingDate={pendingDate}
@@ -126,8 +134,16 @@ export default function App() {
         onUpdateField={updateField}
         onUpdateMetaField={updateMetaField}
         onOpenDateTimePicker={openDateTimePicker}
+        onOpenLocationPicker={openLocationPicker}
         onPickerChange={onPickerChange}
         onPickerDone={onPickerDone}
+      />
+
+      <LocationPickerModal
+        initialCoords={locationPickerCoords}
+        onCancel={closeLocationPicker}
+        onConfirm={handleLocationPickerConfirm}
+        visible={isLocationPickerVisible}
       />
     </SafeAreaView>
   );

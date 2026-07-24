@@ -24,6 +24,7 @@ interface DebriefDialogProps {
   form: DebriefForm;
   metaForm: DebriefMetaForm;
   errorMessage: string;
+  isLoadingLocation: boolean;
   showPicker: boolean;
   pickerStep: 'date' | 'time';
   pendingDate: Date;
@@ -32,6 +33,7 @@ interface DebriefDialogProps {
   onUpdateField: (field: keyof DebriefForm, value: string) => void;
   onUpdateMetaField: (field: keyof DebriefMetaForm, value: string) => void;
   onOpenDateTimePicker: () => void;
+  onOpenLocationPicker: () => void;
   onPickerChange: (event: DateTimePickerEvent, selectedDate?: Date) => void;
   onPickerDone: () => void;
 }
@@ -42,6 +44,7 @@ export function DebriefDialog({
   form,
   metaForm,
   errorMessage,
+  isLoadingLocation,
   showPicker,
   pickerStep,
   pendingDate,
@@ -50,6 +53,7 @@ export function DebriefDialog({
   onUpdateField,
   onUpdateMetaField,
   onOpenDateTimePicker,
+  onOpenLocationPicker,
   onPickerChange,
   onPickerDone,
 }: DebriefDialogProps) {
@@ -130,14 +134,29 @@ export function DebriefDialog({
                       onChange={onPickerChange}
                     />
                   ))}
-                <TextInput
-                  accessibilityLabel="Flugort"
-                  placeholder="Standort"
-                  placeholderTextColor="#7a8da3"
-                  style={styles.metaInput}
-                  value={metaForm.location}
-                  onChangeText={(value) => onUpdateMetaField('location', value)}
-                />
+                <Pressable
+                  accessibilityLabel="Flugort auswählen"
+                  accessibilityRole="button"
+                  onPress={onOpenLocationPicker}
+                  style={({ pressed }) => [
+                    styles.metaInput,
+                    styles.locationPickerButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.locationPickerText,
+                      !metaForm.location && styles.locationPickerPlaceholder,
+                    ]}
+                  >
+                    {isLoadingLocation
+                      ? 'Standort wird ermittelt\u2026'
+                      : (metaForm.location || 'Standort auswählen')}
+                  </Text>
+                  <Text style={styles.locationPickerIcon}>📍</Text>
+                </Pressable>
                 <TextInput
                   accessibilityLabel="Optionaler externer Link"
                   placeholder="Optionaler Link (z.B. XContest)"

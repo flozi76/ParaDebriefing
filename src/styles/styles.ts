@@ -363,4 +363,71 @@ export const styles = StyleSheet.create({
   handPartInactive: {
     backgroundColor: '#bfd2e6',
   },
+  locationPickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  locationPickerText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#17324b',
+  },
+  locationPickerPlaceholder: {
+    color: '#7a8da3',
+  },
+  locationPickerIcon: {
+    fontSize: 18,
+    marginLeft: 8,
+  },
+  locationPickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#c7d7e7',
+  },
+  mapContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  crosshairOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crosshairVertical: {
+    position: 'absolute',
+    width: 2,
+    height: 40,
+    backgroundColor: '#e53e3e',
+    borderRadius: 1,
+  },
+  crosshairHorizontal: {
+    position: 'absolute',
+    width: 40,
+    height: 2,
+    backgroundColor: '#e53e3e',
+    borderRadius: 1,
+  },
+  locationPickerFooter: {
+    padding: 16,
+    paddingBottom: 24,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#c7d7e7',
+    backgroundColor: '#eef5fb',
+  },
+  coordsText: {
+    fontSize: 13,
+    color: '#415a73',
+    textAlign: 'center',
+  },
 });

@@ -1,4 +1,5 @@
 import { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import * as Location from 'expo-location';
 import { useEffect, useMemo, useState } from 'react';
 import { Linking, Platform } from 'react-native';
 
@@ -16,7 +17,9 @@ import {
   saveEntries,
 } from '../repository/debriefRepository';
 import { combineDateAndTime, formatDateInput, formatTimeInput } from '../utils/dateUtils';
-import type { DebriefEntry, DebriefForm, DebriefMetaForm, FingerKey } from '../types';
+import { reverseGeocode } from '../utils/locationUtils';
+import { DEFAULT_LOCATION, FALLBACK_COORDS } from '../constants';
+import type { DebriefEntry, DebriefForm, DebriefMetaForm, FingerKey, GpsCoords } from '../types';
 
 export function useDebriefing() {
   const [form, setForm] = useState<DebriefForm>(createEmptyForm);
@@ -27,6 +30,9 @@ export function useDebriefing() {
   const [hasLoadedEntries, setHasLoadedEntries] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [isLocationPickerVisible, setIsLocationPickerVisible] = useState(false);
+  const [locationPickerCoords, setLocationPickerCoords] = useState<GpsCoords>(FALLBACK_COORDS);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [pickerStep, setPickerStep] = useState<'date' | 'time'>('date');
   const [pendingDate, setPendingDate] = useState<Date>(new Date());
@@ -74,10 +80,36 @@ export function useDebriefing() {
 
   const closeDialog = () => {
     setIsDialogVisible(false);
+    setIsLocationPickerVisible(false);
     setEditingEntryId(null);
     setForm(createEmptyForm());
     setMetaForm(createDefaultMetaForm());
     setErrorMessage('');
+    setIsLoadingLocation(false);
+    setLocationPickerCoords(FALLBACK_COORDS);
+  };
+
+  const fetchGpsForDialog = async (setInitialLocation: boolean) => {
+    setIsLoadingLocation(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const { latitude: lat, longitude: lon } = pos.coords;
+      setLocationPickerCoords({ lat, lon });
+      if (setInitialLocation) {
+        const name = await reverseGeocode(lat, lon);
+        setMetaForm((current) => ({
+          ...current,
+          location:
+            current.location === DEFAULT_LOCATION ? name : current.location,
+        }));
+      }
+    } catch {} finally {
+      setIsLoadingLocation(false);
+    }
   };
 
   const openCreateDialog = () => {
@@ -85,7 +117,9 @@ export function useDebriefing() {
     setForm(createEmptyForm());
     setMetaForm(createDefaultMetaForm());
     setErrorMessage('');
+    setLocationPickerCoords(FALLBACK_COORDS);
     setIsDialogVisible(true);
+    void fetchGpsForDialog(true);
   };
 
   const openEditDialog = (entry: DebriefEntry) => {
@@ -93,7 +127,9 @@ export function useDebriefing() {
     setForm(entry.responses);
     setMetaForm(entry.meta);
     setErrorMessage('');
+    setLocationPickerCoords(FALLBACK_COORDS);
     setIsDialogVisible(true);
+    void fetchGpsForDialog(false);
   };
 
   const openDateTimePicker = () => {
@@ -125,6 +161,20 @@ export function useDebriefing() {
         updateMetaField('flightDate', formatDateInput(selectedDate));
         updateMetaField('flightTime', formatTimeInput(selectedDate));
       }
+    }
+  };
+
+  const handleLocationPickerConfirm = async (coords: GpsCoords) => {
+    setIsLocationPickerVisible(false);
+    setIsLoadingLocation(true);
+    setLocationPickerCoords(coords);
+    try {
+      const name = await reverseGeocode(coords.lat, coords.lon);
+      updateMetaField('location', name);
+    } catch {
+      updateMetaField('location', `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`);
+    } finally {
+      setIsLoadingLocation(false);
     }
   };
 
@@ -197,6 +247,9 @@ export function useDebriefing() {
     storageMessage,
     isDialogVisible,
     isEditing: editingEntryId !== null,
+    isLocationPickerVisible,
+    locationPickerCoords,
+    isLoadingLocation,
     showPicker,
     pickerStep,
     pendingDate,
@@ -206,6 +259,9 @@ export function useDebriefing() {
     openCreateDialog,
     openEditDialog,
     openDateTimePicker,
+    openLocationPicker: () => setIsLocationPickerVisible(true),
+    closeLocationPicker: () => setIsLocationPickerVisible(false),
+    handleLocationPickerConfirm,
     onPickerChange,
     onPickerDone: () => setShowPicker(false),
     openExternalLink,

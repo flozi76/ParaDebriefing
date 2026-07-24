@@ -17,3 +17,5 @@ export type DebriefEntry = {
   meta: DebriefMetaForm;
   responses: DebriefForm;
 };
+
+export type GpsCoords = { lat: number; lon: number };
