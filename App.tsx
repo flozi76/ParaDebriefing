@@ -83,7 +83,7 @@ type DebriefEntry = {
 const STORAGE_KEY = 'paradebriefing.entries';
 const DEFAULT_LOCATION = 'Aktueller Standort';
 const MIN_OVERVIEW_ROW_WIDTH = 220;
-const FALLBACK_COORDS = { lat: 47.5, lon: 11.5 };
+const FALLBACK_COORDS = { lat: 47.5, lon: 11.5 }; // Alps region – central paragliding area
 
 const createEmptyForm = (): DebriefForm => ({
   thumb: '',
@@ -265,7 +265,8 @@ function LocationPickerModal({
       setPickerCoords(initialCoords);
       setMapHtml(generateMapHtml(initialCoords.lat, initialCoords.lon));
     }
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, initialCoords.lat, initialCoords.lon]);
 
   const handleMessage = useCallback(
     (event: { nativeEvent: { data: string } }) => {
@@ -856,7 +857,7 @@ export default function App() {
       <LocationPickerModal
         initialCoords={locationPickerCoords}
         onCancel={() => setIsLocationPickerVisible(false)}
-        onConfirm={(coords) => { void handleLocationPickerConfirm(coords); }}
+        onConfirm={handleLocationPickerConfirm}
         visible={isLocationPickerVisible}
       />
     </SafeAreaView>
