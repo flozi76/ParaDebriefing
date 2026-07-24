@@ -145,9 +145,21 @@ const normalizeEntry = (entry: DebriefEntry): DebriefEntry => {
 
 const toOverviewDate = (date: string, time: string) => {
   const normalizedTime = time.trim() || '--:--';
-  const [year, month, day] = date.split('-');
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
 
-  if (!year || !month || !day) {
+  if (!match) {
+    return `Unbekanntes Datum · ${normalizedTime}`;
+  }
+
+  const [, year, month, day] = match;
+  const validatedDate = new Date(`${year}-${month}-${day}T00:00:00`);
+  const isValidDate =
+    !Number.isNaN(validatedDate.getTime()) &&
+    validatedDate.getFullYear() === Number(year) &&
+    validatedDate.getMonth() === Number(month) - 1 &&
+    validatedDate.getDate() === Number(day);
+
+  if (!isValidDate) {
     return `Unbekanntes Datum · ${normalizedTime}`;
   }
 
@@ -293,8 +305,10 @@ export default function App() {
 
   const openExternalLink = async (url: string) => {
     const normalizedUrl = url.trim();
+    const errorText = 'Externer Link konnte nicht geöffnet werden.';
 
     if (!normalizedUrl) {
+      setStorageMessage(errorText);
       return;
     }
 
@@ -302,19 +316,27 @@ export default function App() {
     try {
       parsedUrl = new URL(normalizedUrl);
     } catch {
+      setStorageMessage(errorText);
       return;
     }
 
     if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      setStorageMessage(errorText);
       return;
     }
 
     const canOpen = await Linking.canOpenURL(parsedUrl.toString());
     if (!canOpen) {
+      setStorageMessage(errorText);
       return;
     }
 
-    await Linking.openURL(parsedUrl.toString());
+    try {
+      await Linking.openURL(parsedUrl.toString());
+      setStorageMessage('');
+    } catch {
+      setStorageMessage(errorText);
+    }
   };
 
   const saveDebrief = () => {
@@ -415,47 +437,52 @@ export default function App() {
                 </Pressable>
               </View>
             ) : (
-              entries.map((entry) => (
-                <View key={entry.id} style={styles.entryCard}>
-                  <View style={styles.entryTopRow}>
-                    <View style={styles.entryOverviewRow}>
-                      <Text style={styles.entryDate}>
-                        {toOverviewDate(
-                          entry.meta.flightDate,
-                          entry.meta.flightTime,
-                        )}
-                      </Text>
-                      <Text style={styles.entryLocation}>{entry.meta.location}</Text>
-                    </View>
-                    {entry.meta.externalLink ? (
+              entries.map((entry) => {
+                const overviewDate = toOverviewDate(
+                  entry.meta.flightDate,
+                  entry.meta.flightTime,
+                );
+                const accessibilityDate = overviewDate.startsWith('Unbekanntes Datum')
+                  ? 'unbekanntem Datum'
+                  : overviewDate;
+
+                return (
+                  <View key={entry.id} style={styles.entryCard}>
+                    <View style={styles.entryTopRow}>
+                      <View style={styles.entryOverviewRow}>
+                        <Text style={styles.entryDate}>{overviewDate}</Text>
+                        <Text style={styles.entryLocation}>{entry.meta.location}</Text>
+                      </View>
+                      {entry.meta.externalLink ? (
+                        <Pressable
+                          accessibilityLabel={`Externen Link vom Flug am ${accessibilityDate} öffnen`}
+                          accessibilityRole="button"
+                          onPress={() => {
+                            void openExternalLink(entry.meta.externalLink);
+                          }}
+                          style={({ pressed }) => [
+                            styles.linkButton,
+                            pressed && styles.buttonPressed,
+                          ]}
+                        >
+                          <Text style={styles.linkButtonText}>Link</Text>
+                        </Pressable>
+                      ) : null}
                       <Pressable
-                        accessibilityLabel={`Externen Link vom Flug am ${toOverviewDate(entry.meta.flightDate, entry.meta.flightTime)} öffnen`}
+                        accessibilityLabel={`Debriefing vom ${accessibilityDate} bearbeiten`}
                         accessibilityRole="button"
-                        onPress={() => {
-                          void openExternalLink(entry.meta.externalLink);
-                        }}
+                        onPress={() => openEditDialog(entry)}
                         style={({ pressed }) => [
-                          styles.linkButton,
+                          styles.editButton,
                           pressed && styles.buttonPressed,
                         ]}
                       >
-                        <Text style={styles.linkButtonText}>Link</Text>
+                        <Text style={styles.editButtonText}>Bearbeiten</Text>
                       </Pressable>
-                    ) : null}
-                    <Pressable
-                      accessibilityLabel={`Debriefing vom ${toOverviewDate(entry.meta.flightDate, entry.meta.flightTime)} bearbeiten`}
-                      accessibilityRole="button"
-                      onPress={() => openEditDialog(entry)}
-                      style={({ pressed }) => [
-                        styles.editButton,
-                        pressed && styles.buttonPressed,
-                      ]}
-                    >
-                      <Text style={styles.editButtonText}>Bearbeiten</Text>
-                    </Pressable>
+                    </View>
                   </View>
-                </View>
-              ))
+                );
+              })
             )}
           </View>
         </ScrollView>
