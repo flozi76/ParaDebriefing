@@ -6,6 +6,15 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "ParaDebriefing verwendet Ihren Standort, um den Flugort zu erfassen."
+        }
+      ],
+      "@react-native-community/datetimepicker"
+    ],
     "ios": {
       "supportsTablet": true
     },
@@ -21,9 +30,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "plugins": [
-      "@react-native-community/datetimepicker"
-    ]
+    }
   }
 }
