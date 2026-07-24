@@ -1,7 +1,8 @@
 import * as Crypto from 'expo-crypto';
+import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Linking,
@@ -15,6 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 const HAND_PARTS = ['thumb', 'index', 'middle', 'ring', 'little'] as const;
 
@@ -81,6 +83,7 @@ type DebriefEntry = {
 const STORAGE_KEY = 'paradebriefing.entries';
 const DEFAULT_LOCATION = 'Aktueller Standort';
 const MIN_OVERVIEW_ROW_WIDTH = 220;
+const FALLBACK_COORDS = { lat: 47.5, lon: 11.5 };
 
 const createEmptyForm = (): DebriefForm => ({
   thumb: '',
@@ -176,6 +179,155 @@ const isValidDateInput = (date: string) =>
 
 const isValidTimeInput = (time: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
 
+const generateMapHtml = (lat: number, lon: number): string =>
+  `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html { width: 100%; height: 100%; overflow: hidden; }
+    #map { width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    var map = L.map('map', { center: [${lat}, ${lon}], zoom: 13 });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '\\u00a9 OpenStreetMap contributors',
+      maxZoom: 19
+    }).addTo(map);
+    map.on('moveend', function() {
+      var c = map.getCenter();
+      window.ReactNativeWebView.postMessage(JSON.stringify({ lat: c.lat, lon: c.lng }));
+    });
+    window.ReactNativeWebView.postMessage(JSON.stringify({ lat: ${lat}, lon: ${lon} }));
+  </script>
+</body>
+</html>`;
+
+const reverseGeocode = async (lat: number, lon: number): Promise<string> => {
+  try {
+    const resp = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+      { headers: { 'Accept-Language': 'de', 'User-Agent': 'ParaDebriefing/1.0' } },
+    );
+    if (!resp.ok) throw new Error('HTTP error');
+    const data = (await resp.json()) as {
+      address?: {
+        village?: string;
+        town?: string;
+        city_district?: string;
+        city?: string;
+        county?: string;
+        state?: string;
+        country?: string;
+      };
+      display_name?: string;
+    };
+    const a = data.address ?? {};
+    const locality =
+      a.village ?? a.town ?? a.city_district ?? a.city ?? a.county ?? a.state;
+    if (locality && a.country) return `${locality}, ${a.country}`;
+    if (locality) return locality;
+    if (data.display_name) return data.display_name;
+    return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  } catch {
+    return `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+  }
+};
+
+type GpsCoords = { lat: number; lon: number };
+
+function LocationPickerModal({
+  visible,
+  initialCoords,
+  onConfirm,
+  onCancel,
+}: {
+  visible: boolean;
+  initialCoords: GpsCoords;
+  onConfirm: (coords: GpsCoords) => void;
+  onCancel: () => void;
+}) {
+  const [pickerCoords, setPickerCoords] = useState<GpsCoords>(initialCoords);
+  const [mapHtml, setMapHtml] = useState('');
+  const prevVisibleRef = useRef(false);
+
+  useEffect(() => {
+    const wasVisible = prevVisibleRef.current;
+    prevVisibleRef.current = visible;
+    if (visible && !wasVisible) {
+      setPickerCoords(initialCoords);
+      setMapHtml(generateMapHtml(initialCoords.lat, initialCoords.lon));
+    }
+  });
+
+  const handleMessage = useCallback(
+    (event: { nativeEvent: { data: string } }) => {
+      try {
+        const data = JSON.parse(event.nativeEvent.data) as GpsCoords;
+        if (typeof data.lat === 'number' && typeof data.lon === 'number') {
+          setPickerCoords(data);
+        }
+      } catch {}
+    },
+    [],
+  );
+
+  return (
+    <Modal animationType="slide" onRequestClose={onCancel} visible={visible}>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.locationPickerHeader}>
+          <Text style={styles.sectionTitle}>Flugort auswählen</Text>
+          <Pressable
+            accessibilityLabel="Karte schließen"
+            accessibilityRole="button"
+            onPress={onCancel}
+            style={({ pressed }) => [styles.closeButton, pressed && styles.buttonPressed]}
+          >
+            <Text style={styles.closeButtonText}>✕</Text>
+          </Pressable>
+        </View>
+
+        <View style={styles.mapContainer}>
+          <WebView
+            javaScriptEnabled
+            onMessage={handleMessage}
+            source={{ html: mapHtml }}
+            style={styles.flex}
+          />
+          <View pointerEvents="none" style={styles.crosshairOverlay}>
+            <View style={styles.crosshairVertical} />
+            <View style={styles.crosshairHorizontal} />
+          </View>
+        </View>
+
+        <View style={styles.locationPickerFooter}>
+          <Text style={styles.coordsText}>
+            {pickerCoords.lat.toFixed(5)}°, {pickerCoords.lon.toFixed(5)}°
+          </Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => onConfirm(pickerCoords)}
+            style={({ pressed }) => [
+              styles.button,
+              styles.dialogPrimaryButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <Text style={styles.buttonText}>Bestätigen</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    </Modal>
+  );
+}
+
 function HandIcon({
   activeParts,
 }: {
@@ -242,6 +394,9 @@ export default function App() {
   const [hasLoadedEntries, setHasLoadedEntries] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
+  const [isLocationPickerVisible, setIsLocationPickerVisible] = useState(false);
+  const [locationPickerCoords, setLocationPickerCoords] = useState<GpsCoords>(FALLBACK_COORDS);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   useEffect(() => {
     const loadEntries = async () => {
@@ -287,10 +442,36 @@ export default function App() {
 
   const closeDialog = () => {
     setIsDialogVisible(false);
+    setIsLocationPickerVisible(false);
     setEditingEntryId(null);
     setForm(createEmptyForm());
     setMetaForm(createDefaultMetaForm());
     setErrorMessage('');
+    setIsLoadingLocation(false);
+    setLocationPickerCoords(FALLBACK_COORDS);
+  };
+
+  const fetchGpsForDialog = async (setInitialLocation: boolean) => {
+    setIsLoadingLocation(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const { latitude: lat, longitude: lon } = pos.coords;
+      setLocationPickerCoords({ lat, lon });
+      if (setInitialLocation) {
+        const name = await reverseGeocode(lat, lon);
+        setMetaForm((current) => ({
+          ...current,
+          location:
+            current.location === DEFAULT_LOCATION ? name : current.location,
+        }));
+      }
+    } catch {} finally {
+      setIsLoadingLocation(false);
+    }
   };
 
   const openCreateDialog = () => {
@@ -298,7 +479,9 @@ export default function App() {
     setForm(createEmptyForm());
     setMetaForm(createDefaultMetaForm());
     setErrorMessage('');
+    setLocationPickerCoords(FALLBACK_COORDS);
     setIsDialogVisible(true);
+    void fetchGpsForDialog(true);
   };
 
   const openEditDialog = (entry: DebriefEntry) => {
@@ -306,12 +489,28 @@ export default function App() {
     setForm(entry.responses);
     setMetaForm(entry.meta);
     setErrorMessage('');
+    setLocationPickerCoords(FALLBACK_COORDS);
     setIsDialogVisible(true);
+    void fetchGpsForDialog(false);
   };
 
   const updateMetaField = (field: keyof DebriefMetaForm, value: string) => {
     setMetaForm((current) => ({ ...current, [field]: value }));
     setErrorMessage('');
+  };
+
+  const handleLocationPickerConfirm = async (coords: GpsCoords) => {
+    setIsLocationPickerVisible(false);
+    setIsLoadingLocation(true);
+    setLocationPickerCoords(coords);
+    try {
+      const name = await reverseGeocode(coords.lat, coords.lon);
+      updateMetaField('location', name);
+    } catch {
+      updateMetaField('location', `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`);
+    } finally {
+      setIsLoadingLocation(false);
+    }
   };
 
   const openExternalLink = async (url: string) => {
@@ -564,14 +763,29 @@ export default function App() {
                     autoCapitalize="none"
                     keyboardType="numbers-and-punctuation"
                   />
-                  <TextInput
-                    accessibilityLabel="Flugort"
-                    placeholder="Standort"
-                    placeholderTextColor="#7a8da3"
-                    style={styles.metaInput}
-                    value={metaForm.location}
-                    onChangeText={(value) => updateMetaField('location', value)}
-                  />
+                  <Pressable
+                    accessibilityLabel="Flugort auswählen"
+                    accessibilityRole="button"
+                    onPress={() => setIsLocationPickerVisible(true)}
+                    style={({ pressed }) => [
+                      styles.metaInput,
+                      styles.locationPickerButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.locationPickerText,
+                        !metaForm.location && styles.locationPickerPlaceholder,
+                      ]}
+                    >
+                      {isLoadingLocation
+                        ? 'Standort wird ermittelt\u2026'
+                        : (metaForm.location || 'Standort auswählen')}
+                    </Text>
+                    <Text style={styles.locationPickerIcon}>📍</Text>
+                  </Pressable>
                   <TextInput
                     accessibilityLabel="Optionaler externer Link"
                     placeholder="Optionaler Link (z.B. XContest)"
@@ -638,6 +852,13 @@ export default function App() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      <LocationPickerModal
+        initialCoords={locationPickerCoords}
+        onCancel={() => setIsLocationPickerVisible(false)}
+        onConfirm={(coords) => { void handleLocationPickerConfirm(coords); }}
+        visible={isLocationPickerVisible}
+      />
     </SafeAreaView>
   );
 }
@@ -979,5 +1200,72 @@ const styles = StyleSheet.create({
   },
   handPartInactive: {
     backgroundColor: '#bfd2e6',
+  },
+  locationPickerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  locationPickerText: {
+    flex: 1,
+    fontSize: 15,
+    color: '#17324b',
+  },
+  locationPickerPlaceholder: {
+    color: '#7a8da3',
+  },
+  locationPickerIcon: {
+    fontSize: 18,
+    marginLeft: 8,
+  },
+  locationPickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#c7d7e7',
+  },
+  mapContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  crosshairOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crosshairVertical: {
+    position: 'absolute',
+    width: 2,
+    height: 40,
+    backgroundColor: '#e53e3e',
+    borderRadius: 1,
+  },
+  crosshairHorizontal: {
+    position: 'absolute',
+    width: 40,
+    height: 2,
+    backgroundColor: '#e53e3e',
+    borderRadius: 1,
+  },
+  locationPickerFooter: {
+    padding: 16,
+    paddingBottom: 24,
+    gap: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#c7d7e7',
+    backgroundColor: '#eef5fb',
+  },
+  coordsText: {
+    fontSize: 13,
+    color: '#415a73',
+    textAlign: 'center',
   },
 });
