@@ -123,6 +123,7 @@ function HandIcon({
         />
       </View>
       <View style={styles.handBase}>
+        <View style={[styles.handPalm, styles.handPartActive]} />
         <View
           style={[
             styles.handThumb,
@@ -130,7 +131,6 @@ function HandIcon({
             !isActive('thumb') && styles.handThumbClosed,
           ]}
         />
-        <View style={[styles.handPalm, styles.handPartActive]} />
       </View>
     </View>
   );
@@ -723,8 +723,8 @@ const styles = StyleSheet.create({
     width: 8,
     height: 20,
     borderRadius: 999,
-    transform: [{ rotate: '-45deg' }],
-    marginRight: -5,
+    transform: [{ rotate: '45deg' }],
+    marginLeft: -5,
     marginBottom: 2,
   },
   handThumbClosed: {
