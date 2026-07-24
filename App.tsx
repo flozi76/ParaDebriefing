@@ -105,7 +105,7 @@ const createDefaultMetaForm = (): DebriefMetaForm => {
 };
 
 const parseLegacyCreatedAt = (createdAt: string) => {
-  // Supports previously stored locale values like "24.07.2026, 14:35:12".
+  // Matches legacy locale format: DD.MM.YYYY, HH:MM[:SS]
   const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4}),?\s+(\d{1,2}):(\d{2})/.exec(
     createdAt,
   );
@@ -148,7 +148,7 @@ const toOverviewDate = (date: string, time: string) => {
   const [year, month, day] = date.split('-');
 
   if (!year || !month || !day) {
-    return `${date} · ${normalizedTime}`;
+    return `Unbekanntes Datum · ${normalizedTime}`;
   }
 
   return `${day}.${month}.${year} · ${normalizedTime}`;
@@ -305,7 +305,7 @@ export default function App() {
       return;
     }
 
-    if (!/^https?:$/i.test(parsedUrl.protocol)) {
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
       return;
     }
 
