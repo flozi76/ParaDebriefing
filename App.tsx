@@ -189,12 +189,6 @@ const toOverviewDate = (date: string, time: string) => {
   return `${day}.${month}.${year} · ${normalizedTime}`;
 };
 
-<<<<<<< HEAD
-const isValidDateInput = (date: string) =>
-  !toOverviewDate(date, '').startsWith('Unbekanntes Datum');
-
-const isValidTimeInput = (time: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
-
 const generateMapHtml = (lat: number, lon: number): string =>
   `<!DOCTYPE html>
 <html>
@@ -345,8 +339,6 @@ function LocationPickerModal({
   );
 }
 
-=======
->>>>>>> origin/main
 function HandIcon({
   activeParts,
 }: {
@@ -413,15 +405,12 @@ export default function App() {
   const [hasLoadedEntries, setHasLoadedEntries] = useState(false);
   const [isDialogVisible, setIsDialogVisible] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
-<<<<<<< HEAD
   const [isLocationPickerVisible, setIsLocationPickerVisible] = useState(false);
   const [locationPickerCoords, setLocationPickerCoords] = useState<GpsCoords>(FALLBACK_COORDS);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-=======
   const [showPicker, setShowPicker] = useState(false);
   const [pickerStep, setPickerStep] = useState<'date' | 'time'>('date');
   const [pendingDate, setPendingDate] = useState<Date>(new Date());
->>>>>>> origin/main
 
   useEffect(() => {
     const loadEntries = async () => {
@@ -524,7 +513,6 @@ export default function App() {
     setErrorMessage('');
   };
 
-<<<<<<< HEAD
   const handleLocationPickerConfirm = async (coords: GpsCoords) => {
     setIsLocationPickerVisible(false);
     setIsLoadingLocation(true);
@@ -536,7 +524,9 @@ export default function App() {
       updateMetaField('location', `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`);
     } finally {
       setIsLoadingLocation(false);
-=======
+    }
+  };
+
   const openDateTimePicker = () => {
     setPendingDate(combineDateAndTime(metaForm.flightDate, metaForm.flightTime));
     setPickerStep('date');
@@ -566,7 +556,6 @@ export default function App() {
         updateMetaField('flightDate', formatDateInput(selectedDate));
         updateMetaField('flightTime', formatTimeInput(selectedDate));
       }
->>>>>>> origin/main
     }
   };
 
@@ -790,51 +779,6 @@ export default function App() {
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.metaFieldsCard}>
-<<<<<<< HEAD
-                  <TextInput
-                    accessibilityLabel="Flugdatum"
-                    placeholder="Datum (YYYY-MM-DD)"
-                    placeholderTextColor="#7a8da3"
-                    style={styles.metaInput}
-                    value={metaForm.flightDate}
-                    onChangeText={(value) => updateMetaField('flightDate', value)}
-                    autoCapitalize="none"
-                    keyboardType="numbers-and-punctuation"
-                  />
-                  <TextInput
-                    accessibilityLabel="Flugzeit"
-                    placeholder="Uhrzeit (HH:MM)"
-                    placeholderTextColor="#7a8da3"
-                    style={styles.metaInput}
-                    value={metaForm.flightTime}
-                    onChangeText={(value) => updateMetaField('flightTime', value)}
-                    autoCapitalize="none"
-                    keyboardType="numbers-and-punctuation"
-                  />
-                  <Pressable
-                    accessibilityLabel="Flugort auswählen"
-                    accessibilityRole="button"
-                    onPress={() => setIsLocationPickerVisible(true)}
-                    style={({ pressed }) => [
-                      styles.metaInput,
-                      styles.locationPickerButton,
-                      pressed && styles.buttonPressed,
-                    ]}
-                  >
-                    <Text
-                      numberOfLines={1}
-                      style={[
-                        styles.locationPickerText,
-                        !metaForm.location && styles.locationPickerPlaceholder,
-                      ]}
-                    >
-                      {isLoadingLocation
-                        ? 'Standort wird ermittelt\u2026'
-                        : (metaForm.location || 'Standort auswählen')}
-                    </Text>
-                    <Text style={styles.locationPickerIcon}>📍</Text>
-                  </Pressable>
-=======
                   <Pressable
                     accessibilityLabel="Flugdatum und -uhrzeit"
                     accessibilityRole="button"
@@ -878,15 +822,29 @@ export default function App() {
                       />
                     )
                   )}
-                  <TextInput
-                    accessibilityLabel="Flugort"
-                    placeholder="Standort"
-                    placeholderTextColor="#7a8da3"
-                    style={styles.metaInput}
-                    value={metaForm.location}
-                    onChangeText={(value) => updateMetaField('location', value)}
-                  />
->>>>>>> origin/main
+                  <Pressable
+                    accessibilityLabel="Flugort auswählen"
+                    accessibilityRole="button"
+                    onPress={() => setIsLocationPickerVisible(true)}
+                    style={({ pressed }) => [
+                      styles.metaInput,
+                      styles.locationPickerButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      style={[
+                        styles.locationPickerText,
+                        !metaForm.location && styles.locationPickerPlaceholder,
+                      ]}
+                    >
+                      {isLoadingLocation
+                        ? 'Standort wird ermittelt\u2026'
+                        : (metaForm.location || 'Standort auswählen')}
+                    </Text>
+                    <Text style={styles.locationPickerIcon}>📍</Text>
+                  </Pressable>
                   <TextInput
                     accessibilityLabel="Optionaler externer Link"
                     placeholder="Optionaler Link (z.B. XContest)"
