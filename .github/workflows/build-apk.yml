@@ -34,12 +34,12 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Build debug APK
+      - name: Build release APK
         working-directory: ./android
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: paradebriefing-debug-apk
-          path: ./android/app/build/outputs/apk/debug/app-debug.apk
+          name: paradebriefing-release-apk
+          path: ./android/app/build/outputs/apk/release/app-release.apk
