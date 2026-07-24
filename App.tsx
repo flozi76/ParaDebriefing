@@ -14,11 +14,14 @@ import {
   View,
 } from 'react-native';
 
+const HAND_PARTS = ['thumb', 'index', 'middle', 'ring', 'little'] as const;
+
 const FINGER_FIELDS = [
   {
     key: 'thumb',
     title: 'Daumen',
     prompt: 'Was war super?',
+    activeParts: ['thumb'],
     placeholder:
       'Lob, positive Erlebnisse, gelungene Manöver oder schöne Momente in der Thermik.',
   },
@@ -26,6 +29,7 @@ const FINGER_FIELDS = [
     key: 'index',
     title: 'Zeigefinger',
     prompt: 'Was habe ich gelernt?',
+    activeParts: ['thumb', 'index'],
     placeholder:
       'Neue Erkenntnisse, Beobachtungen zum Wetter oder taktische Entscheidungen.',
   },
@@ -33,6 +37,7 @@ const FINGER_FIELDS = [
     key: 'middle',
     title: 'Mittelfinger',
     prompt: 'Was lief schlecht / Was kann verbessert werden?',
+    activeParts: ['thumb', 'index', 'middle'],
     placeholder:
       'Fehler, Stresssituationen, verpasste Anschlüsse oder unpräzises Steuern.',
   },
@@ -40,6 +45,7 @@ const FINGER_FIELDS = [
     key: 'ring',
     title: 'Ringfinger',
     prompt: 'Was nehme ich mit?',
+    activeParts: ['thumb', 'index', 'middle', 'ring'],
     placeholder:
       'Das persönliche Fazit, Kernwissen oder bleibende Eindrücke für den nächsten Flug.',
   },
@@ -47,6 +53,7 @@ const FINGER_FIELDS = [
     key: 'little',
     title: 'Kleiner Finger',
     prompt: 'Was kam zu kurz?',
+    activeParts: ['thumb', 'index', 'middle', 'ring', 'little'],
     placeholder:
       'Übersehene Details, mangelnde Vorbereitung, zu wenig Trinken/Essen oder offene Wünsche.',
   },
@@ -70,6 +77,58 @@ const createEmptyForm = (): DebriefForm => ({
   ring: '',
   little: '',
 });
+
+function HandIcon({
+  activeParts,
+}: {
+  activeParts: readonly (typeof HAND_PARTS)[number][];
+}) {
+  const isActive = (part: (typeof HAND_PARTS)[number]) => activeParts.includes(part);
+
+  return (
+    <View style={styles.handIcon} accessible={false}>
+      <View style={styles.handFingers}>
+        <View
+          style={[
+            styles.handFinger,
+            styles.handLittleFinger,
+            isActive('little') ? styles.handPartActive : styles.handPartInactive,
+          ]}
+        />
+        <View
+          style={[
+            styles.handFinger,
+            styles.handRingFinger,
+            isActive('ring') ? styles.handPartActive : styles.handPartInactive,
+          ]}
+        />
+        <View
+          style={[
+            styles.handFinger,
+            styles.handMiddleFinger,
+            isActive('middle') ? styles.handPartActive : styles.handPartInactive,
+          ]}
+        />
+        <View
+          style={[
+            styles.handFinger,
+            styles.handIndexFinger,
+            isActive('index') ? styles.handPartActive : styles.handPartInactive,
+          ]}
+        />
+      </View>
+      <View style={styles.handBase}>
+        <View
+          style={[
+            styles.handThumb,
+            isActive('thumb') ? styles.handPartActive : styles.handPartInactive,
+          ]}
+        />
+        <View style={[styles.handPalm, styles.handPartActive]} />
+      </View>
+    </View>
+  );
+}
 
 export default function App() {
   const [form, setForm] = useState<DebriefForm>(createEmptyForm);
@@ -167,9 +226,13 @@ export default function App() {
             <Text style={styles.sectionTitle}>Neues Debriefing</Text>
             {FINGER_FIELDS.map((field) => (
               <View key={field.key} style={styles.fieldGroup}>
-                <Text style={styles.fieldLabel}>
-                  {field.title} · {field.prompt}
-                </Text>
+                <View style={styles.fieldHeader}>
+                  <HandIcon activeParts={field.activeParts} />
+                  <View style={styles.fieldLabelGroup}>
+                    <Text style={styles.fieldLabel}>{field.title}</Text>
+                    <Text style={styles.fieldPrompt}>{field.prompt}</Text>
+                  </View>
+                </View>
                 <TextInput
                   multiline
                   numberOfLines={4}
@@ -213,7 +276,10 @@ export default function App() {
                   <Text style={styles.entryDate}>{entry.createdAt}</Text>
                   {FINGER_FIELDS.map((field) => (
                     <View key={field.key} style={styles.entrySection}>
-                      <Text style={styles.entryLabel}>{field.title}</Text>
+                      <View style={styles.entryHeader}>
+                        <HandIcon activeParts={field.activeParts} />
+                        <Text style={styles.entryLabel}>{field.title}</Text>
+                      </View>
                       <Text style={styles.entryText}>
                         {entry.responses[field.key]}
                       </Text>
@@ -274,9 +340,23 @@ const styles = StyleSheet.create({
   fieldGroup: {
     gap: 8,
   },
+  fieldHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  fieldLabelGroup: {
+    flex: 1,
+    gap: 2,
+  },
   fieldLabel: {
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#12304a',
+  },
+  fieldPrompt: {
+    fontSize: 14,
+    lineHeight: 20,
     color: '#1f4668',
   },
   input: {
@@ -349,6 +429,11 @@ const styles = StyleSheet.create({
   entrySection: {
     gap: 4,
   },
+  entryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
   entryLabel: {
     fontSize: 14,
     fontWeight: '700',
@@ -358,5 +443,58 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 21,
     color: '#415a73',
+  },
+  handIcon: {
+    width: 48,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+  },
+  handFingers: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 3,
+    marginBottom: 2,
+  },
+  handFinger: {
+    width: 7,
+    borderRadius: 999,
+  },
+  handLittleFinger: {
+    height: 18,
+  },
+  handRingFinger: {
+    height: 24,
+  },
+  handMiddleFinger: {
+    height: 28,
+  },
+  handIndexFinger: {
+    height: 26,
+  },
+  handBase: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  handThumb: {
+    width: 12,
+    height: 8,
+    borderRadius: 999,
+    transform: [{ rotate: '-35deg' }],
+    marginRight: -3,
+    marginBottom: 7,
+  },
+  handPalm: {
+    width: 28,
+    height: 20,
+    borderRadius: 10,
+  },
+  handPartActive: {
+    backgroundColor: '#12304a',
+  },
+  handPartInactive: {
+    backgroundColor: '#bfd2e6',
   },
 });
