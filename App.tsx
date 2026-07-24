@@ -80,6 +80,7 @@ type DebriefEntry = {
 
 const STORAGE_KEY = 'paradebriefing.entries';
 const DEFAULT_LOCATION = 'Aktueller Standort';
+const MIN_OVERVIEW_ROW_WIDTH = 220;
 
 const createEmptyForm = (): DebriefForm => ({
   thumb: '',
@@ -105,7 +106,7 @@ const createDefaultMetaForm = (): DebriefMetaForm => {
 };
 
 const parseLegacyCreatedAt = (createdAt: string) => {
-  // Matches legacy locale format: DD.MM.YYYY, HH:MM[:SS]
+  // Matches legacy locale format: DD.MM.YYYY, HH:MM
   const match = /^(\d{1,2})\.(\d{1,2})\.(\d{4}),?\s+(\d{1,2}):(\d{2})/.exec(
     createdAt,
   );
@@ -152,7 +153,11 @@ const toOverviewDate = (date: string, time: string) => {
   }
 
   const [, year, month, day] = match;
-  const validatedDate = new Date(`${year}-${month}-${day}T00:00:00`);
+  const validatedDate = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+  );
   const isValidDate =
     !Number.isNaN(validatedDate.getTime()) &&
     validatedDate.getFullYear() === Number(year) &&
@@ -165,6 +170,11 @@ const toOverviewDate = (date: string, time: string) => {
 
   return `${day}.${month}.${year} · ${normalizedTime}`;
 };
+
+const isValidDateInput = (date: string) =>
+  !toOverviewDate(date, '').startsWith('Unbekanntes Datum');
+
+const isValidTimeInput = (time: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
 
 function HandIcon({
   activeParts,
@@ -301,6 +311,7 @@ export default function App() {
 
   const updateMetaField = (field: keyof DebriefMetaForm, value: string) => {
     setMetaForm((current) => ({ ...current, [field]: value }));
+    setErrorMessage('');
   };
 
   const openExternalLink = async (url: string) => {
@@ -342,6 +353,16 @@ export default function App() {
   const saveDebrief = () => {
     if (!isComplete) {
       setErrorMessage('Bitte alle fünf Finger ausfüllen.');
+      return;
+    }
+
+    if (!isValidDateInput(metaForm.flightDate.trim())) {
+      setErrorMessage('Bitte Datum im Format YYYY-MM-DD eingeben.');
+      return;
+    }
+
+    if (!isValidTimeInput(metaForm.flightTime.trim())) {
+      setErrorMessage('Bitte Uhrzeit im Format HH:MM eingeben.');
       return;
     }
 
@@ -785,7 +806,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flex: 1,
-    minWidth: 220,
+    minWidth: MIN_OVERVIEW_ROW_WIDTH,
   },
   entryLocation: {
     fontSize: 14,
