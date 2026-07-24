@@ -94,6 +94,7 @@ function HandIcon({
             styles.handFinger,
             styles.handLittleFinger,
             isActive('little') ? styles.handPartActive : styles.handPartInactive,
+            !isActive('little') && styles.handFingerClosed,
           ]}
         />
         <View
@@ -101,6 +102,7 @@ function HandIcon({
             styles.handFinger,
             styles.handRingFinger,
             isActive('ring') ? styles.handPartActive : styles.handPartInactive,
+            !isActive('ring') && styles.handFingerClosed,
           ]}
         />
         <View
@@ -108,6 +110,7 @@ function HandIcon({
             styles.handFinger,
             styles.handMiddleFinger,
             isActive('middle') ? styles.handPartActive : styles.handPartInactive,
+            !isActive('middle') && styles.handFingerClosed,
           ]}
         />
         <View
@@ -115,6 +118,7 @@ function HandIcon({
             styles.handFinger,
             styles.handIndexFinger,
             isActive('index') ? styles.handPartActive : styles.handPartInactive,
+            !isActive('index') && styles.handFingerClosed,
           ]}
         />
       </View>
@@ -123,6 +127,7 @@ function HandIcon({
           style={[
             styles.handThumb,
             isActive('thumb') ? styles.handPartActive : styles.handPartInactive,
+            !isActive('thumb') && styles.handThumbClosed,
           ]}
         />
         <View style={[styles.handPalm, styles.handPartActive]} />
@@ -705,6 +710,9 @@ const styles = StyleSheet.create({
   handIndexFinger: {
     height: 26,
   },
+  handFingerClosed: {
+    height: 8,
+  },
   handBase: {
     width: '100%',
     flexDirection: 'row',
@@ -712,12 +720,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   handThumb: {
-    width: 12,
-    height: 8,
+    width: 8,
+    height: 20,
     borderRadius: 999,
-    transform: [{ rotate: '-35deg' }],
-    marginRight: -3,
-    marginBottom: 7,
+    transform: [{ rotate: '-45deg' }],
+    marginRight: -5,
+    marginBottom: 2,
+  },
+  handThumbClosed: {
+    height: 10,
   },
   handPalm: {
     width: 28,
