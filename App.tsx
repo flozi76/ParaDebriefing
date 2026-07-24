@@ -331,7 +331,8 @@ export default function App() {
       return;
     }
 
-    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+    const protocol = parsedUrl.protocol.toLowerCase();
+    if (protocol !== 'http:' && protocol !== 'https:') {
       setStorageMessage(errorText);
       return;
     }
@@ -544,6 +545,7 @@ export default function App() {
               >
                 <View style={styles.metaFieldsCard}>
                   <TextInput
+                    accessibilityLabel="Flugdatum"
                     placeholder="Datum (YYYY-MM-DD)"
                     placeholderTextColor="#7a8da3"
                     style={styles.metaInput}
@@ -553,6 +555,7 @@ export default function App() {
                     keyboardType="numbers-and-punctuation"
                   />
                   <TextInput
+                    accessibilityLabel="Flugzeit"
                     placeholder="Uhrzeit (HH:MM)"
                     placeholderTextColor="#7a8da3"
                     style={styles.metaInput}
@@ -562,6 +565,7 @@ export default function App() {
                     keyboardType="numbers-and-punctuation"
                   />
                   <TextInput
+                    accessibilityLabel="Flugort"
                     placeholder="Standort"
                     placeholderTextColor="#7a8da3"
                     style={styles.metaInput}
@@ -569,6 +573,7 @@ export default function App() {
                     onChangeText={(value) => updateMetaField('location', value)}
                   />
                   <TextInput
+                    accessibilityLabel="Optionaler externer Link"
                     placeholder="Optionaler Link (z.B. XContest)"
                     placeholderTextColor="#7a8da3"
                     style={styles.metaInput}
