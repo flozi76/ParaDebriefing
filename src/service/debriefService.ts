@@ -2,7 +2,7 @@ import * as Crypto from 'expo-crypto';
 
 import { DEFAULT_LOCATION } from '../constants';
 import { formatDateInput, formatTimeInput } from '../utils/dateUtils';
-import type { DebriefEntry, DebriefForm, DebriefMetaForm } from '../types';
+import type { DebriefCategories, DebriefEntry, DebriefForm, DebriefMetaForm } from '../types';
 
 export const createEmptyForm = (): DebriefForm => ({
   thumb: '',
@@ -10,6 +10,14 @@ export const createEmptyForm = (): DebriefForm => ({
   middle: '',
   ring: '',
   little: '',
+});
+
+export const createEmptyCategories = (): DebriefCategories => ({
+  thumb: [],
+  index: [],
+  middle: [],
+  ring: [],
+  little: [],
 });
 
 export const createDefaultMetaForm = (): DebriefMetaForm => {
@@ -44,6 +52,7 @@ const parseLegacyCreatedAt = (
 export const normalizeEntry = (entry: DebriefEntry): DebriefEntry => {
   const parsedDateTime = parseLegacyCreatedAt(entry.createdAt);
   const fallbackMeta = createDefaultMetaForm();
+  const fallbackCategories = createEmptyCategories();
 
   return {
     ...entry,
@@ -55,17 +64,26 @@ export const normalizeEntry = (entry: DebriefEntry): DebriefEntry => {
       location: entry.meta?.location ?? fallbackMeta.location,
       externalLink: entry.meta?.externalLink ?? '',
     },
+    categories: {
+      thumb: entry.categories?.thumb ?? fallbackCategories.thumb,
+      index: entry.categories?.index ?? fallbackCategories.index,
+      middle: entry.categories?.middle ?? fallbackCategories.middle,
+      ring: entry.categories?.ring ?? fallbackCategories.ring,
+      little: entry.categories?.little ?? fallbackCategories.little,
+    },
   };
 };
 
 export const buildNewEntry = (
   meta: DebriefMetaForm,
   responses: DebriefForm,
+  categories: DebriefCategories,
 ): DebriefEntry => ({
   id: Crypto.randomUUID(),
   createdAt: new Date().toLocaleString('de-DE'),
   meta,
   responses,
+  categories,
 });
 
 export const trimForm = (form: DebriefForm): DebriefForm =>

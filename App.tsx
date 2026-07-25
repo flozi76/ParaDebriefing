@@ -18,6 +18,7 @@ import { styles } from './src/styles/styles';
 export default function App() {
   const {
     form,
+    categories,
     metaForm,
     entries,
     errorMessage,
@@ -31,6 +32,7 @@ export default function App() {
     pickerStep,
     pendingDate,
     updateField,
+    updateCategory,
     updateMetaField,
     closeDialog,
     openCreateDialog,
@@ -123,6 +125,7 @@ export default function App() {
         visible={isDialogVisible}
         isEditing={isEditing}
         form={form}
+        categories={categories}
         metaForm={metaForm}
         errorMessage={errorMessage}
         isLoadingLocation={isLoadingLocation}
@@ -132,6 +135,7 @@ export default function App() {
         onClose={closeDialog}
         onSave={saveDebrief}
         onUpdateField={updateField}
+        onUpdateCategory={updateCategory}
         onUpdateMetaField={updateMetaField}
         onOpenDateTimePicker={openDateTimePicker}
         onOpenLocationPicker={openLocationPicker}
