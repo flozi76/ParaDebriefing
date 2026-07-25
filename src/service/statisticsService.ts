@@ -59,6 +59,7 @@ const PHASE_ORDER: PhaseKey[] = [
 ];
 
 const ALL_FINGERS = FINGER_FIELDS.map((field) => field.key);
+const INVALID_MONTH_KEY = '9999-99';
 
 const CATEGORY_OPTIONS: CategoryOption[] = FINGER_FIELDS.flatMap((field) =>
   FINGER_CATEGORIES[field.key].categories.map((category) => ({
@@ -75,7 +76,7 @@ const getScopeFingers = (fingerFilter: FingerFilter): FingerKey[] =>
 
 const toMonthKey = (flightDate: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(flightDate)) {
-    return { key: '9999-99', label: 'Ohne Datum' };
+    return { key: INVALID_MONTH_KEY, label: 'Ohne Datum' };
   }
 
   const [year, month] = flightDate.split('-');
@@ -88,6 +89,13 @@ const toMonthKey = (flightDate: string) => {
 export const getCategoryOptions = (fingerFilter: FingerFilter): CategoryOption[] =>
   CATEGORY_OPTIONS.filter((option) => fingerFilter === 'all' || option.finger === fingerFilter);
 
+/**
+ * Builds a filtered statistics snapshot from existing debrief entries.
+ * `fingerFilter` limits the category scope, while `selectedCategoryIds` optionally narrows that
+ * scope down to explicit category matches. `matchedEntries` counts flights that satisfy the
+ * explicit category filter, and `scopedHitCount` counts the category assignments that remain
+ * inside the active scope.
+ */
 export const computeStatistics = (
   entries: DebriefEntry[],
   fingerFilter: FingerFilter,

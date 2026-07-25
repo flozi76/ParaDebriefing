@@ -81,7 +81,7 @@ function SpiderChart({
           );
         })}
         <View style={styles.spiderCenterBadge}>
-          <Text style={styles.spiderCenterBadgeText}>Radar</Text>
+          <Text style={styles.spiderCenterBadgeText}>Profil</Text>
         </View>
       </View>
       <View style={styles.spiderLegend}>
@@ -264,7 +264,7 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
 
           <View style={styles.card}>
             <View style={styles.statisticsCardHeader}>
-              <Text style={styles.sectionTitle}>Spinnennetz-Profil</Text>
+              <Text style={styles.sectionTitle}>Radar-Profil</Text>
               <Text style={styles.statisticsCaption}>Wie oft taucht jeder Finger in den Treffer-Flügen auf?</Text>
             </View>
             <SpiderChart points={stats.spiderPoints} />
