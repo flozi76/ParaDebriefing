@@ -40,7 +40,7 @@ function SpiderChart({
         ))}
         {points.map((point, index) => {
           const angle = -Math.PI / 2 + index * ((Math.PI * 2) / points.length);
-          const axisLeft = SPIDER_CENTER + Math.cos(angle) * (SPIDER_RADIUS / 2) - (SPIDER_RADIUS / 2);
+          const axisLeft = SPIDER_CENTER + (Math.cos(angle) - 1) * (SPIDER_RADIUS / 2);
           const axisTop = SPIDER_CENTER + Math.sin(angle) * (SPIDER_RADIUS / 2) - 1;
           const dotLeft = SPIDER_CENTER + Math.cos(angle) * SPIDER_RADIUS * point.ratio - 7;
           const dotTop = SPIDER_CENTER + Math.sin(angle) * SPIDER_RADIUS * point.ratio - 7;

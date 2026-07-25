@@ -80,10 +80,10 @@ const toMonthKey = (flightDate: string) => {
     return { key: MISSING_DATE_KEY, label: 'Ohne Datum' };
   }
 
-  const [year, month, _day] = flightDate.split('-');
+  const [year, month] = flightDate.split('-', 2);
   return {
     key: `${year}-${month}`,
-    label: `${month}.${year.slice(2)}`,
+    label: `${month}.${year.length === 4 ? year.slice(2) : year}`,
   };
 };
 
