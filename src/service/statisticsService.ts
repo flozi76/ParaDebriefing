@@ -59,7 +59,7 @@ const PHASE_ORDER: PhaseKey[] = [
 ];
 
 const ALL_FINGERS = FINGER_FIELDS.map((field) => field.key);
-const INVALID_MONTH_KEY = '9999-99';
+const MISSING_DATE_KEY = '9999-99';
 
 const CATEGORY_OPTIONS: CategoryOption[] = FINGER_FIELDS.flatMap((field) =>
   FINGER_CATEGORIES[field.key].categories.map((category) => ({
@@ -76,7 +76,7 @@ const getScopeFingers = (fingerFilter: FingerFilter): FingerKey[] =>
 
 const toMonthKey = (flightDate: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(flightDate)) {
-    return { key: INVALID_MONTH_KEY, label: 'Ohne Datum' };
+    return { key: MISSING_DATE_KEY, label: 'Ohne Datum' };
   }
 
   const [year, month] = flightDate.split('-');

@@ -12,8 +12,10 @@ interface StatisticsPageProps {
 }
 
 const SPIDER_SIZE = 240;
-const SPIDER_RADIUS = 78;
+const SPIDER_RADIUS = SPIDER_SIZE * 0.325;
 const SPIDER_CENTER = SPIDER_SIZE / 2;
+const MIN_MONTH_BAR_HEIGHT = 24;
+const MONTH_BAR_HEIGHT_RANGE = 96;
 
 function SpiderChart({
   points,
@@ -286,7 +288,9 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
                       style={[
                         styles.monthBar,
                         {
-                          height: 24 + (item.count / maxMonthCount) * 96,
+                          height:
+                            MIN_MONTH_BAR_HEIGHT +
+                            (item.count / maxMonthCount) * MONTH_BAR_HEIGHT_RANGE,
                         },
                       ]}
                     />
