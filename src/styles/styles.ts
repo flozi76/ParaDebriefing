@@ -16,6 +16,7 @@ export const styles = StyleSheet.create({
   },
   statisticsPage: {
     gap: 16,
+    paddingBottom: 4,
   },
   header: {
     gap: 8,

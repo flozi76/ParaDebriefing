@@ -60,6 +60,7 @@ const PHASE_ORDER: PhaseKey[] = [
 
 const ALL_FINGERS = FINGER_FIELDS.map((field) => field.key);
 const MISSING_DATE_KEY = '9999-99';
+const FALLBACK_LABEL = 'Noch offen';
 
 const CATEGORY_OPTIONS: CategoryOption[] = FINGER_FIELDS.flatMap((field) =>
   FINGER_CATEGORIES[field.key].categories.map((category) => ({
@@ -79,7 +80,7 @@ const toMonthKey = (flightDate: string) => {
     return { key: MISSING_DATE_KEY, label: 'Ohne Datum' };
   }
 
-  const [year, month] = flightDate.split('-');
+  const [year, month, _day] = flightDate.split('-');
   return {
     key: `${year}-${month}`,
     label: `${month}.${year.slice(2)}`,
@@ -172,8 +173,10 @@ export const computeStatistics = (
     totalEntries: entries.length,
     matchedEntries: matchedEntries.length,
     scopedHitCount: scopedHits.length,
-    topPhaseLabel: topPhase ? PHASE_LABELS[topPhase[0]] : 'Noch offen',
-    topCategoryLabel: topCategory ? (CATEGORY_BY_ID.get(topCategory[0])?.label ?? 'Noch offen') : 'Noch offen',
+    topPhaseLabel: topPhase ? PHASE_LABELS[topPhase[0]] : FALLBACK_LABEL,
+    topCategoryLabel: topCategory
+      ? (CATEGORY_BY_ID.get(topCategory[0])?.label ?? FALLBACK_LABEL)
+      : FALLBACK_LABEL,
     spiderPoints,
     monthSeries: [...monthCounts.entries()]
       .sort((left, right) => left[0].localeCompare(right[0]))
