@@ -76,14 +76,25 @@ const getScopeFingers = (fingerFilter: FingerFilter): FingerKey[] =>
   fingerFilter === 'all' ? ALL_FINGERS : [fingerFilter];
 
 const toMonthKey = (flightDate: string) => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(flightDate)) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(flightDate);
+  if (!match) {
     return { key: MISSING_DATE_KEY, label: 'Ohne Datum' };
   }
 
-  const [year, month] = flightDate.split('-', 2);
+  const [, year, month, day] = match;
+  const parsedDate = new Date(`${year}-${month}-${day}T12:00:00Z`);
+  if (
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.getUTCFullYear() !== Number(year) ||
+    parsedDate.getUTCMonth() + 1 !== Number(month) ||
+    parsedDate.getUTCDate() !== Number(day)
+  ) {
+    return { key: MISSING_DATE_KEY, label: 'Ohne Datum' };
+  }
+
   return {
     key: `${year}-${month}`,
-    label: `${month}.${year.length === 4 ? year.slice(2) : year}`,
+    label: `${month}.${year.slice(2)}`,
   };
 };
 

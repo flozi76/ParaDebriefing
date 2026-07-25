@@ -14,8 +14,17 @@ interface StatisticsPageProps {
 const SPIDER_SIZE = 240;
 const SPIDER_RADIUS = SPIDER_SIZE * 0.325;
 const SPIDER_CENTER = SPIDER_SIZE / 2;
+const SPIDER_AXIS_RADIUS = SPIDER_RADIUS / 2;
 const MIN_MONTH_BAR_HEIGHT = 24;
 const MONTH_BAR_HEIGHT_RANGE = 96;
+
+const getSpiderAxisPosition = (angle: number) => ({
+  left: SPIDER_CENTER + Math.cos(angle) * SPIDER_AXIS_RADIUS - SPIDER_AXIS_RADIUS,
+  top: SPIDER_CENTER + Math.sin(angle) * SPIDER_AXIS_RADIUS - 1,
+});
+
+const getMonthBarHeight = (count: number, maxCount: number) =>
+  MIN_MONTH_BAR_HEIGHT + (count / maxCount) * MONTH_BAR_HEIGHT_RANGE;
 
 function SpiderChart({
   points,
@@ -40,8 +49,7 @@ function SpiderChart({
         ))}
         {points.map((point, index) => {
           const angle = -Math.PI / 2 + index * ((Math.PI * 2) / points.length);
-          const axisLeft = SPIDER_CENTER + (Math.cos(angle) - 1) * (SPIDER_RADIUS / 2);
-          const axisTop = SPIDER_CENTER + Math.sin(angle) * (SPIDER_RADIUS / 2) - 1;
+          const axisPosition = getSpiderAxisPosition(angle);
           const dotLeft = SPIDER_CENTER + Math.cos(angle) * SPIDER_RADIUS * point.ratio - 7;
           const dotTop = SPIDER_CENTER + Math.sin(angle) * SPIDER_RADIUS * point.ratio - 7;
           const labelLeft = SPIDER_CENTER + Math.cos(angle) * (SPIDER_RADIUS + 24) - 32;
@@ -53,8 +61,8 @@ function SpiderChart({
                 style={[
                   styles.spiderAxis,
                   {
-                    left: axisLeft,
-                    top: axisTop,
+                    left: axisPosition.left,
+                    top: axisPosition.top,
                     transform: [{ rotate: `${angle}rad` }],
                   },
                 ]}
@@ -288,9 +296,7 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
                       style={[
                         styles.monthBar,
                         {
-                          height:
-                            MIN_MONTH_BAR_HEIGHT +
-                            (item.count / maxMonthCount) * MONTH_BAR_HEIGHT_RANGE,
+                          height: getMonthBarHeight(item.count, maxMonthCount),
                         },
                       ]}
                     />
