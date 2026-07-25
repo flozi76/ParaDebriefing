@@ -6,6 +6,7 @@ import { Linking, Platform } from 'react-native';
 import {
   buildNewEntry,
   createDefaultMetaForm,
+  createEmptyCategories,
   createEmptyForm,
   normalizeEntry,
   trimForm,
@@ -18,11 +19,12 @@ import {
 } from '../repository/debriefRepository';
 import { combineDateAndTime, formatDateInput, formatTimeInput } from '../utils/dateUtils';
 import { reverseGeocode } from '../utils/locationUtils';
-import { DEFAULT_LOCATION, FALLBACK_COORDS } from '../constants';
-import type { DebriefEntry, DebriefForm, DebriefMetaForm, FingerKey, GpsCoords } from '../types';
+import { DEFAULT_LOCATION, FALLBACK_COORDS, FINGER_CATEGORIES } from '../constants';
+import type { DebriefCategories, DebriefEntry, DebriefForm, DebriefMetaForm, FingerKey, GpsCoords } from '../types';
 
 export function useDebriefing() {
   const [form, setForm] = useState<DebriefForm>(createEmptyForm);
+  const [categories, setCategories] = useState<DebriefCategories>(createEmptyCategories);
   const [metaForm, setMetaForm] = useState<DebriefMetaForm>(createDefaultMetaForm);
   const [entries, setEntries] = useState<DebriefEntry[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
@@ -73,6 +75,23 @@ export function useDebriefing() {
     setErrorMessage('');
   };
 
+  const updateCategory = (field: FingerKey, categoryId: string) => {
+    const { selection } = FINGER_CATEGORIES[field];
+    setCategories((current) => {
+      const existing = current[field];
+      if (selection === 'single') {
+        return { ...current, [field]: existing[0] === categoryId ? [] : [categoryId] };
+      }
+      return {
+        ...current,
+        [field]: existing.includes(categoryId)
+          ? existing.filter((id) => id !== categoryId)
+          : [...existing, categoryId],
+      };
+    });
+    setErrorMessage('');
+  };
+
   const updateMetaField = (field: keyof DebriefMetaForm, value: string) => {
     setMetaForm((current) => ({ ...current, [field]: value }));
     setErrorMessage('');
@@ -83,6 +102,7 @@ export function useDebriefing() {
     setIsLocationPickerVisible(false);
     setEditingEntryId(null);
     setForm(createEmptyForm());
+    setCategories(createEmptyCategories());
     setMetaForm(createDefaultMetaForm());
     setErrorMessage('');
     setIsLoadingLocation(false);
@@ -115,6 +135,7 @@ export function useDebriefing() {
   const openCreateDialog = () => {
     setEditingEntryId(null);
     setForm(createEmptyForm());
+    setCategories(createEmptyCategories());
     setMetaForm(createDefaultMetaForm());
     setErrorMessage('');
     setLocationPickerCoords(FALLBACK_COORDS);
@@ -125,6 +146,7 @@ export function useDebriefing() {
   const openEditDialog = (entry: DebriefEntry) => {
     setEditingEntryId(entry.id);
     setForm(entry.responses);
+    setCategories(entry.categories ?? createEmptyCategories());
     setMetaForm(entry.meta);
     setErrorMessage('');
     setLocationPickerCoords(FALLBACK_COORDS);
@@ -228,12 +250,12 @@ export function useDebriefing() {
       setEntries((current) =>
         current.map((entry) =>
           entry.id === editingEntryId
-            ? { ...entry, meta: trimmedMeta, responses: trimmedResponses }
+            ? { ...entry, meta: trimmedMeta, responses: trimmedResponses, categories }
             : entry,
         ),
       );
     } else {
-      setEntries((current) => [buildNewEntry(trimmedMeta, trimmedResponses), ...current]);
+      setEntries((current) => [buildNewEntry(trimmedMeta, trimmedResponses, categories), ...current]);
     }
 
     closeDialog();
@@ -241,6 +263,7 @@ export function useDebriefing() {
 
   return {
     form,
+    categories,
     metaForm,
     entries,
     errorMessage,
@@ -254,6 +277,7 @@ export function useDebriefing() {
     pickerStep,
     pendingDate,
     updateField,
+    updateCategory,
     updateMetaField,
     closeDialog,
     openCreateDialog,

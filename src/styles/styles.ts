@@ -390,6 +390,35 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#c7d7e7',
   },
+  categoryChipsContainer: {
+    marginTop: 2,
+  },
+  categoryChipsScroll: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingVertical: 2,
+  },
+  categoryChip: {
+    borderWidth: 1,
+    borderColor: '#c7d7e7',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#f9fbfd',
+  },
+  categoryChipSelected: {
+    backgroundColor: '#0f6cbd',
+    borderColor: '#0f6cbd',
+  },
+  categoryChipText: {
+    fontSize: 13,
+    color: '#1f4668',
+    fontWeight: '500',
+  },
+  categoryChipTextSelected: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
   mapContainer: {
     flex: 1,
     position: 'relative',

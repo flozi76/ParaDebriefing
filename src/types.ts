@@ -4,6 +4,8 @@ export type FingerKey = (typeof FINGER_FIELDS)[number]['key'];
 
 export type DebriefForm = Record<FingerKey, string>;
 
+export type DebriefCategories = Record<FingerKey, string[]>;
+
 export type DebriefMetaForm = {
   flightDate: string;
   flightTime: string;
@@ -16,6 +18,7 @@ export type DebriefEntry = {
   createdAt: string;
   meta: DebriefMetaForm;
   responses: DebriefForm;
+  categories?: DebriefCategories;
 };
 
 export type GpsCoords = { lat: number; lon: number };

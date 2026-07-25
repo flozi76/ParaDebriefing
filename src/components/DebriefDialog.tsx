@@ -15,13 +15,15 @@ import {
 import { FINGER_FIELDS } from '../constants';
 import { styles } from '../styles/styles';
 import { toOverviewDate } from '../utils/dateUtils';
+import { CategoryChips } from './CategoryChips';
 import { HandIcon } from './HandIcon';
-import type { DebriefForm, DebriefMetaForm } from '../types';
+import type { DebriefCategories, DebriefForm, DebriefMetaForm } from '../types';
 
 interface DebriefDialogProps {
   visible: boolean;
   isEditing: boolean;
   form: DebriefForm;
+  categories: DebriefCategories;
   metaForm: DebriefMetaForm;
   errorMessage: string;
   isLoadingLocation: boolean;
@@ -31,6 +33,7 @@ interface DebriefDialogProps {
   onClose: () => void;
   onSave: () => void;
   onUpdateField: (field: keyof DebriefForm, value: string) => void;
+  onUpdateCategory: (field: keyof DebriefCategories, categoryId: string) => void;
   onUpdateMetaField: (field: keyof DebriefMetaForm, value: string) => void;
   onOpenDateTimePicker: () => void;
   onOpenLocationPicker: () => void;
@@ -42,6 +45,7 @@ export function DebriefDialog({
   visible,
   isEditing,
   form,
+  categories,
   metaForm,
   errorMessage,
   isLoadingLocation,
@@ -51,6 +55,7 @@ export function DebriefDialog({
   onClose,
   onSave,
   onUpdateField,
+  onUpdateCategory,
   onUpdateMetaField,
   onOpenDateTimePicker,
   onOpenLocationPicker,
@@ -178,6 +183,11 @@ export function DebriefDialog({
                       <Text style={styles.fieldPrompt}>{field.prompt}</Text>
                     </View>
                   </View>
+                  <CategoryChips
+                    fingerKey={field.key}
+                    selected={categories[field.key]}
+                    onToggle={(categoryId) => onUpdateCategory(field.key, categoryId)}
+                  />
                   <TextInput
                     multiline
                     numberOfLines={4}
