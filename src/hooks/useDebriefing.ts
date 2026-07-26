@@ -237,6 +237,10 @@ export function useDebriefing() {
     }
   };
 
+  const deleteEntry = (id: string) => {
+    setEntries((current) => current.filter((entry) => entry.id !== id));
+  };
+
   const saveDebrief = () => {
     if (!isComplete) {
       setErrorMessage('Bitte alle fünf Finger ausfüllen.');
@@ -290,5 +294,6 @@ export function useDebriefing() {
     onPickerDone: () => setShowPicker(false),
     openExternalLink,
     saveDebrief,
+    deleteEntry,
   };
 }

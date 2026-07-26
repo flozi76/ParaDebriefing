@@ -284,6 +284,19 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  deleteButton: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#f5c6cb',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#fff5f5',
+  },
+  deleteButtonText: {
+    color: '#b42318',
+    fontSize: 14,
+    fontWeight: '700',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(18, 48, 74, 0.45)',
