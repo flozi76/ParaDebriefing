@@ -48,6 +48,7 @@ export default function App() {
     onPickerDone,
     openExternalLink,
     saveDebrief,
+    deleteEntry,
   } = useDebriefing();
 
   return (
@@ -154,6 +155,7 @@ export default function App() {
                     key={entry.id}
                     entry={entry}
                     onEdit={openEditDialog}
+                    onDelete={deleteEntry}
                     onOpenLink={(url) => {
                       void openExternalLink(url);
                     }}
