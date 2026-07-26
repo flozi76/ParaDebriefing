@@ -1,4 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
+import { useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -12,10 +13,12 @@ import {
 import { DebriefDialog } from './src/components/DebriefDialog';
 import { EntryCard } from './src/components/EntryCard';
 import { LocationPickerModal } from './src/components/LocationPickerModal';
+import { StatisticsPage } from './src/components/StatisticsPage';
 import { useDebriefing } from './src/hooks/useDebriefing';
 import { styles } from './src/styles/styles';
 
 export default function App() {
+  const [activePage, setActivePage] = useState<'entries' | 'stats'>('entries');
   const {
     form,
     categories,
@@ -83,41 +86,84 @@ export default function App() {
             ) : null}
           </View>
 
-          <View style={styles.card}>
-            <View style={styles.listHeader}>
-              <Text style={styles.sectionTitle}>Gespeicherte Debriefings</Text>
-              <Text style={styles.badge}>{entries.length}</Text>
-            </View>
-
-            {entries.length === 0 ? (
-              <View style={styles.emptyStateGroup}>
-                <Text style={styles.emptyState}>
-                  Noch kein Debriefing gespeichert. Tippe auf Plus, um nach deinem nächsten Flug alle fünf Finger zu erfassen.
-                </Text>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={openCreateDialog}
-                  style={({ pressed }) => [
-                    styles.secondaryButton,
-                    pressed && styles.buttonPressed,
-                  ]}
-                >
-                  <Text style={styles.secondaryButtonText}>Debriefing anlegen</Text>
-                </Pressable>
-              </View>
-            ) : (
-              entries.map((entry) => (
-                <EntryCard
-                  key={entry.id}
-                  entry={entry}
-                  onEdit={openEditDialog}
-                  onOpenLink={(url) => {
-                    void openExternalLink(url);
-                  }}
-                />
-              ))
-            )}
+          <View style={styles.pageSwitch}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setActivePage('entries')}
+              style={({ pressed }) => [
+                styles.pageSwitchButton,
+                activePage === 'entries' && styles.pageSwitchButtonActive,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.pageSwitchButtonText,
+                  activePage === 'entries' && styles.pageSwitchButtonTextActive,
+                ]}
+              >
+                Debriefings
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => setActivePage('stats')}
+              style={({ pressed }) => [
+                styles.pageSwitchButton,
+                activePage === 'stats' && styles.pageSwitchButtonActive,
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.pageSwitchButtonText,
+                  activePage === 'stats' && styles.pageSwitchButtonTextActive,
+                ]}
+              >
+                Statistik
+              </Text>
+            </Pressable>
           </View>
+
+          {activePage === 'entries' ? (
+            <View style={styles.card}>
+              <View style={styles.listHeader}>
+                <Text style={styles.sectionTitle}>Gespeicherte Debriefings</Text>
+                <Text style={styles.badge}>{entries.length}</Text>
+              </View>
+
+              {entries.length === 0 ? (
+                <View style={styles.emptyStateGroup}>
+                  <Text style={styles.emptyState}>
+                    Noch kein Debriefing gespeichert. Tippe auf Plus, um nach deinem nächsten Flug alle fünf Finger zu erfassen.
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={openCreateDialog}
+                    style={({ pressed }) => [
+                      styles.secondaryButton,
+                      pressed && styles.buttonPressed,
+                    ]}
+                  >
+                    <Text style={styles.secondaryButtonText}>Debriefing anlegen</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                entries.map((entry) => (
+                  <EntryCard
+                    key={entry.id}
+                    entry={entry}
+                    onEdit={openEditDialog}
+                    onOpenLink={(url) => {
+                      void openExternalLink(url);
+                    }}
+                  />
+                ))
+              )}
+            </View>
+          ) : (
+            <StatisticsPage entries={entries} onCreateEntry={openCreateDialog} />
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
 
