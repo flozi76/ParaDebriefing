@@ -11,7 +11,7 @@ export const FINGER_CATEGORIES: Record<
     categories: [
       { id: 'thumb.great_day', label: 'Super Flugtag / Traumbedingungen', phase: 'preparation' },
       { id: 'thumb.clean_launch', label: 'Sauberer Start', phase: 'launch' },
-      { id: 'thumb.core_centered', label: 'Bart sauber zentriert', phase: 'climb' },
+      { id: 'thumb.core_centered', label: 'Schlauch sauber zentriert', phase: 'climb' },
       { id: 'thumb.connection_made', label: 'Anschluss geklappt', phase: 'cross_country' },
       { id: 'thumb.milestone', label: 'Persönlicher Meilenstein', phase: 'cross_country' },
       { id: 'thumb.good_decision', label: 'Gute Entscheidung getroffen', phase: 'cross_country' },
@@ -33,6 +33,8 @@ export const FINGER_CATEGORIES: Record<
       { id: 'index.group_awareness', label: 'Gruppe im Blick behalten', phase: 'cross_country' },
       { id: 'index.equipment_check', label: 'Materialcheck / Ausrüstung', phase: 'preparation' },
       { id: 'index.energy_nutrition', label: 'Energiehaushalt / Verpflegung', phase: 'cross_country' },
+      { id: 'index.turn_right_more', label: 'Mehr rechts drehen', phase: 'climb' },
+      { id: 'index.turn_left_more', label: 'Mehr links drehen', phase: 'climb' },
     ],
   },
   middle: {
@@ -46,6 +48,7 @@ export const FINGER_CATEGORIES: Record<
       { id: 'middle.hectic_stress', label: 'Hektisches Handeln unter Stress', phase: 'climb' },
       { id: 'middle.incomplete_prep', label: 'Unvollständige Vorbereitung', phase: 'preparation' },
       { id: 'middle.flying_fatigued', label: 'Übermüdet fliegen', phase: 'preparation' },
+      { id: 'middle.one_turn_direction_only', label: 'Nur in einer Drehrichtung einkreisen', phase: 'climb' },
     ],
   },
   ring: {
@@ -72,6 +75,8 @@ export const FINGER_CATEGORIES: Record<
       { id: 'little.mental_strength', label: 'Mentale Stärke trainiert', phase: 'cross_country' },
       { id: 'little.navigation', label: 'Navigation verbessert', phase: 'cross_country' },
       { id: 'little.airspace_knowledge', label: 'Luftraumwissen erweitert', phase: 'preparation' },
+      { id: 'little.good_right_turn', label: 'Gut rechts gedreht', phase: 'climb' },
+      { id: 'little.good_left_turn', label: 'Gut links gedreht', phase: 'climb' },
     ],
   },
 };
