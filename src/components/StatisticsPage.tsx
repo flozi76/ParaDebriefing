@@ -32,6 +32,7 @@ const PHASE_SPIDER_COLORS = {
   landing: '#c9772a',
 } as const;
 const SPIDER_SCALE_STEPS = [0.25, 0.5, 0.75, 1];
+const SPIDER_META_SEPARATOR = ' · ';
 
 const getSpiderAxisPosition = (angle: number) => ({
   left: SPIDER_CENTER + Math.cos(angle) * SPIDER_AXIS_RADIUS - SPIDER_AXIS_RADIUS,
@@ -104,6 +105,7 @@ function SpiderChart({
           const fingerDotLeft = SPIDER_CENTER + Math.cos(angle) * (SPIDER_RADIUS + 24) - 4;
           const fingerDotTop = SPIDER_CENTER + Math.sin(angle) * (SPIDER_RADIUS + 24) - 4;
           const isSelected = selectedPointKey === point.key;
+          const isDimmed = selectedPointKey !== null && selectedPointKey !== point.key;
 
           return (
             <View key={point.key}>
@@ -126,7 +128,7 @@ function SpiderChart({
                       width: lineLength,
                       left: (x1 + x2) / 2 - lineLength / 2,
                       top: (y1 + y2) / 2 - 1,
-                      opacity: selectedPointKey !== null && selectedPointKey !== point.key ? 0.4 : 1,
+                      opacity: isDimmed ? 0.4 : 1,
                       transform: [{ rotate: `${lineAngle}rad` }],
                     },
                   ]}
@@ -232,7 +234,7 @@ function SpiderChart({
                 <View style={styles.spiderLegendTextWrap}>
                   <Text style={styles.spiderLegendLabel}>{point.label}</Text>
                   <Text style={styles.spiderLegendMeta}>
-                    {[point.phaseLabel, point.fingerTitle].filter(Boolean).join(' · ')}
+                    {[point.phaseLabel, point.fingerTitle].filter(Boolean).join(SPIDER_META_SEPARATOR)}
                   </Text>
                 </View>
               </View>
