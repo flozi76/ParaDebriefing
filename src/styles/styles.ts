@@ -569,14 +569,18 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: 999,
   },
-  spiderRingLabelWrap: {
+  spiderGroupPill: {
     position: 'absolute',
+    borderRadius: 999,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'visible',
   },
-  spiderRingLabel: {
-    textAlign: 'center',
-    fontSize: 10,
+  spiderGroupPillLabel: {
+    fontSize: 9,
     fontWeight: '700',
     color: '#ffffff',
+    textAlign: 'center',
   },
   spiderAxis: {
     position: 'absolute',
