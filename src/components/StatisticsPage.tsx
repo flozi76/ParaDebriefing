@@ -231,7 +231,9 @@ function SpiderChart({
                 />
                 <View style={styles.spiderLegendTextWrap}>
                   <Text style={styles.spiderLegendLabel}>{point.label}</Text>
-                  <Text style={styles.spiderLegendMeta}>{point.phaseLabel} · {point.fingerTitle}</Text>
+                  <Text style={styles.spiderLegendMeta}>
+                    {[point.phaseLabel, point.fingerTitle].filter(Boolean).join(' · ')}
+                  </Text>
                 </View>
               </View>
               <Text style={styles.spiderLegendValue}>{point.count}</Text>
