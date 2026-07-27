@@ -565,6 +565,12 @@ export const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: '#d6e2ee',
   },
+  spiderLine: {
+    position: 'absolute',
+    height: 2,
+    borderRadius: 999,
+    backgroundColor: 'rgba(87, 112, 134, 0.4)',
+  },
   spiderPoint: {
     position: 'absolute',
     width: 14,
