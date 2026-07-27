@@ -41,21 +41,6 @@ function SpiderChart({
   return (
     <View style={styles.spiderCard}>
       <View style={styles.spiderChart}>
-        {[1, 2, 3].map((step) => (
-          <View
-            key={step}
-            style={[
-              styles.spiderRing,
-              {
-                width: step * 56,
-                height: step * 56,
-                borderRadius: step * 28,
-                left: SPIDER_CENTER - step * 28,
-                top: SPIDER_CENTER - step * 28,
-              },
-            ]}
-          />
-        ))}
         {points.map((point, index) => {
           const angle = -Math.PI / 2 + index * ((Math.PI * 2) / points.length);
           const axisPosition = getSpiderAxisPosition(angle);
@@ -112,9 +97,6 @@ function SpiderChart({
             </View>
           );
         })}
-        <View style={styles.spiderCenterBadge}>
-          <Text style={styles.spiderCenterBadgeText}>Profil</Text>
-        </View>
       </View>
       <View style={styles.spiderLegend}>
         {points.map((point) => (
