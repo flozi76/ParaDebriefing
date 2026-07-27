@@ -76,6 +76,8 @@ const getSpiderGroupLabelWidth = (groupLength: number, angleStep: number) =>
     ),
   );
 
+const normalizeRingIndex = (index: number, size: number) => ((index % size) + size) % size;
+
 const getSpiderGroupRuns = (
   points: SpiderPoint[],
   resolveGroup: (point: SpiderPoint) => { key: string; label: string },
@@ -193,9 +195,11 @@ function SpiderChart({
           );
         })}
         {fingerGroupRuns.map((group) => {
-          // Fractional offsets intentionally center labels between segment boundaries for even spans.
-          const centerIndex =
-            (group.startIndex + (group.length - 1) / 2 + points.length) % points.length;
+          // `(length - 1) / 2` yields the segment midpoint (including half-steps for even spans).
+          const centerIndex = normalizeRingIndex(
+            group.startIndex + (group.length - 1) / 2,
+            points.length,
+          );
           const angle = -Math.PI / 2 + centerIndex * angleStep;
           const width = getSpiderGroupLabelWidth(group.length, angleStep);
           const left = SPIDER_CENTER + Math.cos(angle) * SPIDER_FINGER_RING_RADIUS - width / 2;
