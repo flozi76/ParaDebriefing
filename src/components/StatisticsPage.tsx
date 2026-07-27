@@ -111,6 +111,7 @@ function SpiderChart({
 export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) {
   const [fingerFilter, setFingerFilter] = useState<FingerFilter>('all');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   const categoryOptions = useMemo(() => getCategoryOptions(fingerFilter), [fingerFilter]);
   const stats = useMemo(
@@ -121,6 +122,14 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
   const maxMonthCount = Math.max(...stats.monthSeries.map((item) => item.count), 1);
   const maxPhaseCount = Math.max(...stats.phaseSeries.map((item) => item.count), 1);
   const selectedCategorySet = new Set(selectedCategoryIds);
+  const fingerFilterLabel =
+    fingerFilter === 'all'
+      ? 'Alle Finger'
+      : FINGER_FIELDS.find((field) => field.key === fingerFilter)?.title ?? 'Alle Finger';
+  const categorySelectionLabel =
+    selectedCategoryIds.length === 0
+      ? 'alle Kategorien'
+      : `${selectedCategoryIds.length} ${selectedCategoryIds.length === 1 ? 'Kategorie' : 'Kategorien'}`;
 
   const handleFingerFilterChange = (nextFilter: FingerFilter) => {
     setFingerFilter(nextFilter);
@@ -167,84 +176,104 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.filterTitle}>Finger-Fokus</Text>
-        <View style={styles.filterChipWrap}>
+        <View style={styles.statisticsFilterHeader}>
+          <Text style={styles.filterTitle}>Filter</Text>
           <Pressable
             accessibilityRole="button"
-            onPress={() => handleFingerFilterChange('all')}
-            style={({ pressed }) => [
-              styles.filterChip,
-              fingerFilter === 'all' && styles.filterChipSelected,
-              pressed && styles.buttonPressed,
-            ]}
+            onPress={() => setIsFilterExpanded((current) => !current)}
+            style={({ pressed }) => [pressed && styles.buttonPressed]}
           >
-            <Text
-              style={[
-                styles.filterChipText,
-                fingerFilter === 'all' && styles.filterChipTextSelected,
-              ]}
-            >
-              Alle
+            <Text style={styles.resetFilterText}>
+              {isFilterExpanded ? 'Ausblenden' : 'Anzeigen'}
             </Text>
           </Pressable>
-          {FINGER_FIELDS.map((field) => (
-            <Pressable
-              key={field.key}
-              accessibilityRole="button"
-              onPress={() => handleFingerFilterChange(field.key)}
-              style={({ pressed }) => [
-                styles.filterChip,
-                fingerFilter === field.key && styles.filterChipSelected,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  fingerFilter === field.key && styles.filterChipTextSelected,
-                ]}
-              >
-                {field.title}
-              </Text>
-            </Pressable>
-          ))}
         </View>
+        <Text style={styles.statisticsCaption}>
+          Aktiv: {fingerFilterLabel} · {categorySelectionLabel}
+        </Text>
 
-        <View style={styles.statisticsFilterHeader}>
-          <Text style={styles.filterTitle}>Kategorien</Text>
-          {selectedCategoryIds.length > 0 ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => setSelectedCategoryIds([])}
-              style={({ pressed }) => [pressed && styles.buttonPressed]}
-            >
-              <Text style={styles.resetFilterText}>Zurücksetzen</Text>
-            </Pressable>
-          ) : null}
-        </View>
-        <View style={styles.filterChipWrap}>
-          {categoryOptions.map((option) => (
-            <Pressable
-              key={option.id}
-              accessibilityRole="button"
-              onPress={() => toggleCategory(option.id)}
-              style={({ pressed }) => [
-                styles.filterChip,
-                selectedCategorySet.has(option.id) && styles.filterChipSelected,
-                pressed && styles.buttonPressed,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  selectedCategorySet.has(option.id) && styles.filterChipTextSelected,
+        {isFilterExpanded ? (
+          <>
+            <Text style={styles.filterTitle}>Finger-Fokus</Text>
+            <View style={styles.filterChipWrap}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => handleFingerFilterChange('all')}
+                style={({ pressed }) => [
+                  styles.filterChip,
+                  fingerFilter === 'all' && styles.filterChipSelected,
+                  pressed && styles.buttonPressed,
                 ]}
               >
-                {option.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    fingerFilter === 'all' && styles.filterChipTextSelected,
+                  ]}
+                >
+                  Alle
+                </Text>
+              </Pressable>
+              {FINGER_FIELDS.map((field) => (
+                <Pressable
+                  key={field.key}
+                  accessibilityRole="button"
+                  onPress={() => handleFingerFilterChange(field.key)}
+                  style={({ pressed }) => [
+                    styles.filterChip,
+                    fingerFilter === field.key && styles.filterChipSelected,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      fingerFilter === field.key && styles.filterChipTextSelected,
+                    ]}
+                  >
+                    {field.title}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={styles.statisticsFilterHeader}>
+              <Text style={styles.filterTitle}>Kategorien</Text>
+              {selectedCategoryIds.length > 0 ? (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setSelectedCategoryIds([])}
+                  style={({ pressed }) => [pressed && styles.buttonPressed]}
+                >
+                  <Text style={styles.resetFilterText}>Zurücksetzen</Text>
+                </Pressable>
+              ) : null}
+            </View>
+            <View style={styles.filterChipWrap}>
+              {categoryOptions.map((option) => (
+                <Pressable
+                  key={option.id}
+                  accessibilityRole="button"
+                  onPress={() => toggleCategory(option.id)}
+                  style={({ pressed }) => [
+                    styles.filterChip,
+                    selectedCategorySet.has(option.id) && styles.filterChipSelected,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.filterChipText,
+                      selectedCategorySet.has(option.id) && styles.filterChipTextSelected,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </>
+        ) : null}
       </View>
 
       {stats.matchedEntries === 0 ? (
