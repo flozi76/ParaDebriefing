@@ -33,6 +33,7 @@ const PHASE_SPIDER_COLORS = {
 } as const;
 const SPIDER_SCALE_STEPS = [0.25, 0.5, 0.75, 1];
 const SPIDER_META_SEPARATOR = ' · ';
+const toUniqueGroups = (pairs: Array<[string, string]>) => [...new Map(pairs).entries()];
 
 const getSpiderAxisPosition = (angle: number) => ({
   left: SPIDER_CENTER + Math.cos(angle) * SPIDER_AXIS_RADIUS - SPIDER_AXIS_RADIUS,
@@ -50,8 +51,8 @@ function SpiderChart({
   const [selectedPointKey, setSelectedPointKey] = useState<string | null>(null);
   const maxSpiderCount = Math.max(...points.map((point) => point.count), 1);
   const selectedPoint = points.find((point) => point.key === selectedPointKey) ?? null;
-  const phaseGroups = [...new Map(points.map((point) => [point.phase, point.phaseLabel])).entries()];
-  const fingerGroups = [...new Map(points.map((point) => [point.finger, point.fingerTitle])).entries()];
+  const phaseGroups = toUniqueGroups(points.map((point) => [point.phase, point.phaseLabel]));
+  const fingerGroups = toUniqueGroups(points.map((point) => [point.finger, point.fingerTitle]));
 
   return (
     <View style={styles.spiderCard}>
@@ -234,7 +235,9 @@ function SpiderChart({
                 <View style={styles.spiderLegendTextWrap}>
                   <Text style={styles.spiderLegendLabel}>{point.label}</Text>
                   <Text style={styles.spiderLegendMeta}>
-                    {[point.phaseLabel, point.fingerTitle].filter(Boolean).join(SPIDER_META_SEPARATOR)}
+                    {[point.phaseLabel, point.fingerTitle]
+                      .filter((value): value is string => value.trim().length > 0)
+                      .join(SPIDER_META_SEPARATOR)}
                   </Text>
                 </View>
               </View>
