@@ -20,13 +20,10 @@ const MONTH_BAR_HEIGHT_RANGE = 96;
 const SPIDER_PHASE_RING_RADIUS = SPIDER_RADIUS + 12;
 const SPIDER_PHASE_RING_THICKNESS = 8;
 const SPIDER_FINGER_RING_RADIUS = SPIDER_RADIUS + 28;
-const SPIDER_FINGER_RING_THICKNESS = 14;
+const SPIDER_FINGER_RING_THICKNESS = 16;
 const SPIDER_RING_SEGMENT_FILL = 0.92;
 const MIN_SPIDER_RING_SEGMENT_LENGTH = 8;
-const SPIDER_GROUP_LABEL_MIN_WIDTH = 42;
-const SPIDER_GROUP_LABEL_MAX_WIDTH = 82;
-const SPIDER_GROUP_LABEL_WIDTH_SCALE = 0.65;
-const SPIDER_GROUP_LABEL_HALF_HEIGHT = 8;
+const SPIDER_GROUP_MIN_PILL_WIDTH = 44;
 const DEFAULT_SPIDER_RING_COLOR = '#56758e';
 const FINGER_SPIDER_COLORS = {
   thumb: '#4cae5c',
@@ -66,15 +63,6 @@ const getSpiderRingSegmentPosition = (
   left: SPIDER_CENTER + Math.cos(angle) * radius - segmentLength / 2,
   top: SPIDER_CENTER + Math.sin(angle) * radius - thickness / 2,
 });
-
-const getSpiderGroupLabelWidth = (groupLength: number, angleStep: number) =>
-  Math.min(
-    SPIDER_GROUP_LABEL_MAX_WIDTH,
-    Math.max(
-      SPIDER_GROUP_LABEL_MIN_WIDTH,
-      groupLength * SPIDER_FINGER_RING_RADIUS * angleStep * SPIDER_GROUP_LABEL_WIDTH_SCALE,
-    ),
-  );
 
 const normalizeRingIndex = (index: number, size: number) => ((index % size) + size) % size;
 
@@ -133,10 +121,6 @@ function SpiderChart({
       MIN_SPIDER_RING_SEGMENT_LENGTH,
       SPIDER_PHASE_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
     ),
-    fingerSegmentLength: Math.max(
-      MIN_SPIDER_RING_SEGMENT_LENGTH,
-      SPIDER_FINGER_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
-    ),
   }));
 
   return (
@@ -169,56 +153,52 @@ function SpiderChart({
             />
           );
         })}
-        {ringSegments.map(({ point, angle, fingerSegmentLength }) => {
-          const segmentPosition = getSpiderRingSegmentPosition(
-            angle,
-            SPIDER_FINGER_RING_RADIUS,
-            fingerSegmentLength,
-            SPIDER_FINGER_RING_THICKNESS,
-          );
-
-          return (
-            <View
-              key={`finger-ring-${point.key}`}
-              style={[
-                styles.spiderRingSegment,
-                {
-                  width: fingerSegmentLength,
-                  height: SPIDER_FINGER_RING_THICKNESS,
-                  left: segmentPosition.left,
-                  top: segmentPosition.top,
-                  backgroundColor: FINGER_SPIDER_COLORS[point.finger] ?? DEFAULT_SPIDER_RING_COLOR,
-                  transform: [{ rotate: `${angle + Math.PI / 2}rad` }],
-                },
-              ]}
-            />
-          );
-        })}
         {fingerGroupRuns.map((group) => {
           // `(length - 1) / 2` yields the segment midpoint (including half-steps for even spans).
           const centerIndex = normalizeRingIndex(
             group.startIndex + (group.length - 1) / 2,
             points.length,
           );
-          const angle = -Math.PI / 2 + centerIndex * angleStep;
-          const width = getSpiderGroupLabelWidth(group.length, angleStep);
-          const left = SPIDER_CENTER + Math.cos(angle) * SPIDER_FINGER_RING_RADIUS - width / 2;
-          const top =
-            SPIDER_CENTER + Math.sin(angle) * SPIDER_FINGER_RING_RADIUS - SPIDER_GROUP_LABEL_HALF_HEIGHT;
+          const centerAngle = -Math.PI / 2 + centerIndex * angleStep;
+          const groupWidth = Math.max(
+            SPIDER_GROUP_MIN_PILL_WIDTH,
+            group.length * SPIDER_FINGER_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
+          );
+          const pillPosition = getSpiderRingSegmentPosition(
+            centerAngle,
+            SPIDER_FINGER_RING_RADIUS,
+            groupWidth,
+            SPIDER_FINGER_RING_THICKNESS,
+          );
+          const pillAngle = centerAngle + Math.PI / 2;
+          const color =
+            FINGER_SPIDER_COLORS[group.key as keyof typeof FINGER_SPIDER_COLORS] ??
+            DEFAULT_SPIDER_RING_COLOR;
 
           return (
             <View
-              key={`group-label-${group.key}`}
+              key={`finger-group-${group.key}`}
               style={[
-                styles.spiderRingLabelWrap,
+                styles.spiderGroupPill,
                 {
-                  width,
-                  left,
-                  top,
+                  width: groupWidth,
+                  height: SPIDER_FINGER_RING_THICKNESS,
+                  left: pillPosition.left,
+                  top: pillPosition.top,
+                  backgroundColor: color,
+                  transform: [{ rotate: `${pillAngle}rad` }],
                 },
               ]}
             >
-              <Text style={styles.spiderRingLabel}>{group.label}</Text>
+              <Text
+                style={[
+                  styles.spiderGroupPillLabel,
+                  { transform: [{ rotate: `${-pillAngle}rad` }] },
+                ]}
+                numberOfLines={1}
+              >
+                {group.label}
+              </Text>
             </View>
           );
         })}
