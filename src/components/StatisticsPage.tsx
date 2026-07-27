@@ -27,6 +27,7 @@ const SPIDER_GROUP_LABEL_MIN_WIDTH = 42;
 const SPIDER_GROUP_LABEL_MAX_WIDTH = 82;
 const SPIDER_GROUP_LABEL_WIDTH_SCALE = 0.65;
 const SPIDER_GROUP_LABEL_HALF_HEIGHT = 8;
+const DEFAULT_SPIDER_RING_COLOR = '#56758e';
 const FINGER_SPIDER_COLORS = {
   thumb: '#4cae5c',
   index: '#d89b2b',
@@ -88,12 +89,6 @@ const getSpiderGroupRuns = (
     });
   });
 
-  if (runs.length > 1 && runs[0].key === runs[runs.length - 1].key) {
-    // Keep wrap-around groups contiguous on the circular chart (end + start of the ring).
-    runs[runs.length - 1].length += runs[0].length;
-    runs.shift();
-  }
-
   return runs;
 };
 
@@ -141,7 +136,8 @@ function SpiderChart({
                   left: segmentPosition.left,
                   top: segmentPosition.top,
                   backgroundColor:
-                    PHASE_SPIDER_COLORS[point.phase as keyof typeof PHASE_SPIDER_COLORS] ?? '#56758e',
+                    PHASE_SPIDER_COLORS[point.phase as keyof typeof PHASE_SPIDER_COLORS] ??
+                    DEFAULT_SPIDER_RING_COLOR,
                   transform: [{ rotate: `${angle + Math.PI / 2}rad` }],
                 },
               ]}
@@ -171,7 +167,7 @@ function SpiderChart({
                   height: SPIDER_FINGER_RING_THICKNESS,
                   left: segmentPosition.left,
                   top: segmentPosition.top,
-                  backgroundColor: FINGER_SPIDER_COLORS[point.finger] ?? '#56758e',
+                  backgroundColor: FINGER_SPIDER_COLORS[point.finger] ?? DEFAULT_SPIDER_RING_COLOR,
                   transform: [{ rotate: `${angle + Math.PI / 2}rad` }],
                 },
               ]}
@@ -180,8 +176,7 @@ function SpiderChart({
         })}
         {fingerGroupRuns.map((group) => {
           // Fractional offsets intentionally center labels between segment boundaries for even spans.
-          const centerIndex =
-            (group.startIndex + (group.length - 1) / 2 + points.length) % points.length;
+          const centerIndex = (group.startIndex + (group.length - 1) / 2) % points.length;
           const angle = -Math.PI / 2 + centerIndex * angleStep;
           const width = Math.min(
             SPIDER_GROUP_LABEL_MAX_WIDTH,
