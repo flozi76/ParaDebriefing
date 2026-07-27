@@ -22,6 +22,8 @@ export type StatisticsSnapshot = {
   spiderPoints: Array<{
     key: string;
     label: string;
+    phase: string;
+    phaseLabel: string;
     finger: FingerKey;
     fingerTitle: string;
     count: number;
@@ -183,6 +185,8 @@ export const computeStatistics = (
     return {
       key: option.id,
       label: option.label,
+      phase: option.phase,
+      phaseLabel: PHASE_LABELS[option.phase as PhaseKey] ?? option.phase,
       finger: option.finger,
       fingerTitle: option.fingerTitle,
       count,

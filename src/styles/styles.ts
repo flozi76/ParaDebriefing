@@ -552,6 +552,19 @@ export const styles = StyleSheet.create({
     alignSelf: 'center',
     position: 'relative',
   },
+  spiderScaleRing: {
+    position: 'absolute',
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(87, 112, 134, 0.2)',
+  },
+  spiderScaleLabel: {
+    position: 'absolute',
+    right: 2,
+    fontSize: 11,
+    color: '#587086',
+    fontWeight: '600',
+  },
   spiderAxis: {
     position: 'absolute',
     width: 78,
@@ -574,6 +587,64 @@ export const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#ffffff',
   },
+  spiderPointSelected: {
+    borderColor: '#12304a',
+    borderWidth: 3,
+    transform: [{ scale: 1.2 }],
+    zIndex: 2,
+  },
+  spiderOuterDot: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+  },
+  spiderGroupLegend: {
+    width: '100%',
+    gap: 8,
+  },
+  spiderGroupLegendTitle: {
+    fontSize: 12,
+    color: '#587086',
+    fontWeight: '700',
+  },
+  spiderGroupRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  spiderGroupChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: '#f2f7fc',
+    borderWidth: 1,
+    borderColor: '#d6e2ee',
+  },
+  spiderGroupColor: {
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+  },
+  spiderGroupText: {
+    fontSize: 12,
+    color: '#415a73',
+    fontWeight: '600',
+  },
+  spiderSelection: {
+    width: '100%',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#12304a',
+  },
+  spiderSelectionHint: {
+    width: '100%',
+    fontSize: 13,
+    color: '#587086',
+  },
   spiderLegend: {
     width: '100%',
     gap: 8,
@@ -583,6 +654,12 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 12,
+  },
+  spiderLegendRowSelected: {
+    borderRadius: 10,
+    backgroundColor: '#eef5fc',
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
   spiderLegendLabelGroup: {
     flex: 1,
