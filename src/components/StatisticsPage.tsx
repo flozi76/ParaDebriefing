@@ -17,6 +17,13 @@ const SPIDER_CENTER = SPIDER_SIZE / 2;
 const SPIDER_AXIS_RADIUS = SPIDER_RADIUS / 2;
 const MIN_MONTH_BAR_HEIGHT = 24;
 const MONTH_BAR_HEIGHT_RANGE = 96;
+const SPIDER_PHASE_RING_RADIUS = SPIDER_RADIUS + 12;
+const SPIDER_PHASE_RING_THICKNESS = 8;
+const SPIDER_FINGER_RING_RADIUS = SPIDER_RADIUS + 28;
+const SPIDER_FINGER_RING_THICKNESS = 14;
+const SPIDER_RING_SEGMENT_FILL = 0.92;
+const SPIDER_GROUP_LABEL_MIN_WIDTH = 42;
+const SPIDER_GROUP_LABEL_MAX_WIDTH = 82;
 const FINGER_SPIDER_COLORS = {
   thumb: '#4cae5c',
   index: '#d89b2b',
@@ -33,12 +40,58 @@ const PHASE_SPIDER_COLORS = {
 } as const;
 const SPIDER_SCALE_STEPS = [0.25, 0.5, 0.75, 1];
 const SPIDER_META_SEPARATOR = ' · ';
-const uniqueByGroupKey = (pairs: Array<[string, string]>) => [...new Map(pairs).entries()];
+type SpiderPoint = ReturnType<typeof computeStatistics>['spiderPoints'][number];
+type SpiderGroupRun = {
+  key: string;
+  label: string;
+  startIndex: number;
+  length: number;
+};
 
 const getSpiderAxisPosition = (angle: number) => ({
   left: SPIDER_CENTER + Math.cos(angle) * SPIDER_AXIS_RADIUS - SPIDER_AXIS_RADIUS,
   top: SPIDER_CENTER + Math.sin(angle) * SPIDER_AXIS_RADIUS - 1,
 });
+
+const getSpiderRingSegmentPosition = (
+  angle: number,
+  radius: number,
+  segmentLength: number,
+  thickness: number,
+) => ({
+  left: SPIDER_CENTER + Math.cos(angle) * radius - segmentLength / 2,
+  top: SPIDER_CENTER + Math.sin(angle) * radius - thickness / 2,
+});
+
+const getSpiderGroupRuns = (
+  points: SpiderPoint[],
+  resolveGroup: (point: SpiderPoint) => { key: string; label: string },
+): SpiderGroupRun[] => {
+  const runs: SpiderGroupRun[] = [];
+
+  points.forEach((point, index) => {
+    const group = resolveGroup(point);
+    const previous = runs.at(-1);
+    if (previous && previous.key === group.key) {
+      previous.length += 1;
+      return;
+    }
+
+    runs.push({
+      key: group.key,
+      label: group.label,
+      startIndex: index,
+      length: 1,
+    });
+  });
+
+  if (runs.length > 1 && runs[0].key === runs[runs.length - 1].key) {
+    runs[runs.length - 1].length += runs[0].length;
+    runs.shift();
+  }
+
+  return runs;
+};
 
 const getMonthBarHeight = (count: number, maxCount: number) =>
   MIN_MONTH_BAR_HEIGHT + (count / maxCount) * MONTH_BAR_HEIGHT_RANGE;
@@ -51,12 +104,105 @@ function SpiderChart({
   const [selectedPointKey, setSelectedPointKey] = useState<string | null>(null);
   const maxSpiderCount = Math.max(...points.map((point) => point.count), 1);
   const selectedPoint = points.find((point) => point.key === selectedPointKey) ?? null;
-  const phaseGroups = uniqueByGroupKey(points.map((point) => [point.phase, point.phaseLabel]));
-  const fingerGroups = uniqueByGroupKey(points.map((point) => [point.finger, point.fingerTitle]));
+  const angleStep = points.length > 0 ? (Math.PI * 2) / points.length : 0;
+  const fingerGroupRuns = getSpiderGroupRuns(points, (point) => ({
+    key: point.finger,
+    label: point.fingerTitle,
+  }));
 
   return (
     <View style={styles.spiderCard}>
       <View style={styles.spiderChart}>
+        {points.map((point, index) => {
+          const angle = -Math.PI / 2 + index * angleStep;
+          const segmentLength = Math.max(
+            8,
+            SPIDER_PHASE_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
+          );
+          const segmentPosition = getSpiderRingSegmentPosition(
+            angle,
+            SPIDER_PHASE_RING_RADIUS,
+            segmentLength,
+            SPIDER_PHASE_RING_THICKNESS,
+          );
+
+          return (
+            <View
+              key={`phase-ring-${point.key}`}
+              style={[
+                styles.spiderRingSegment,
+                {
+                  width: segmentLength,
+                  height: SPIDER_PHASE_RING_THICKNESS,
+                  left: segmentPosition.left,
+                  top: segmentPosition.top,
+                  backgroundColor:
+                    PHASE_SPIDER_COLORS[point.phase as keyof typeof PHASE_SPIDER_COLORS] ?? '#56758e',
+                  transform: [{ rotate: `${angle + Math.PI / 2}rad` }],
+                },
+              ]}
+            />
+          );
+        })}
+        {points.map((point, index) => {
+          const angle = -Math.PI / 2 + index * angleStep;
+          const segmentLength = Math.max(
+            8,
+            SPIDER_FINGER_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
+          );
+          const segmentPosition = getSpiderRingSegmentPosition(
+            angle,
+            SPIDER_FINGER_RING_RADIUS,
+            segmentLength,
+            SPIDER_FINGER_RING_THICKNESS,
+          );
+
+          return (
+            <View
+              key={`finger-ring-${point.key}`}
+              style={[
+                styles.spiderRingSegment,
+                {
+                  width: segmentLength,
+                  height: SPIDER_FINGER_RING_THICKNESS,
+                  left: segmentPosition.left,
+                  top: segmentPosition.top,
+                  backgroundColor: FINGER_SPIDER_COLORS[point.finger],
+                  transform: [{ rotate: `${angle + Math.PI / 2}rad` }],
+                },
+              ]}
+            />
+          );
+        })}
+        {fingerGroupRuns.map((group) => {
+          const centerIndex = group.startIndex + (group.length - 1) / 2;
+          const angle = -Math.PI / 2 + centerIndex * angleStep;
+          const width = Math.min(
+            SPIDER_GROUP_LABEL_MAX_WIDTH,
+            Math.max(
+              SPIDER_GROUP_LABEL_MIN_WIDTH,
+              group.length * SPIDER_FINGER_RING_RADIUS * angleStep * 0.65,
+            ),
+          );
+          const left = SPIDER_CENTER + Math.cos(angle) * SPIDER_FINGER_RING_RADIUS - width / 2;
+          const top = SPIDER_CENTER + Math.sin(angle) * SPIDER_FINGER_RING_RADIUS - 8;
+
+          return (
+            <View
+              key={`group-label-${group.key}`}
+              style={[
+                styles.spiderRingLabelWrap,
+                {
+                  width,
+                  left,
+                  top,
+                },
+              ]}
+            >
+              <Text style={styles.spiderRingLabel}>{group.label}</Text>
+            </View>
+          );
+        })}
         {SPIDER_SCALE_STEPS.map((step) => {
           const size = SPIDER_RADIUS * 2 * step;
           return (
@@ -101,10 +247,6 @@ function SpiderChart({
           const y2 = SPIDER_CENTER + Math.sin(nextAngle) * SPIDER_RADIUS * nextPoint.ratio;
           const lineAngle = Math.atan2(y2 - y1, x2 - x1);
           const lineLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
-          const phaseDotLeft = SPIDER_CENTER + Math.cos(angle) * (SPIDER_RADIUS + 12) - 4;
-          const phaseDotTop = SPIDER_CENTER + Math.sin(angle) * (SPIDER_RADIUS + 12) - 4;
-          const fingerDotLeft = SPIDER_CENTER + Math.cos(angle) * (SPIDER_RADIUS + 24) - 4;
-          const fingerDotTop = SPIDER_CENTER + Math.sin(angle) * (SPIDER_RADIUS + 24) - 4;
           const isSelected = selectedPointKey === point.key;
           const isDimmed = selectedPointKey !== null && selectedPointKey !== point.key;
 
@@ -135,27 +277,6 @@ function SpiderChart({
                   ]}
                 />
               )}
-              <View
-                style={[
-                  styles.spiderOuterDot,
-                  {
-                    backgroundColor:
-                      PHASE_SPIDER_COLORS[point.phase as keyof typeof PHASE_SPIDER_COLORS] ?? '#56758e',
-                    left: phaseDotLeft,
-                    top: phaseDotTop,
-                  },
-                ]}
-              />
-              <View
-                style={[
-                  styles.spiderOuterDot,
-                  {
-                    backgroundColor: pointColor,
-                    left: fingerDotLeft,
-                    top: fingerDotTop,
-                  },
-                ]}
-              />
               <Pressable
                 accessibilityRole="button"
                 onPress={() => setSelectedPointKey((current) => (current === point.key ? null : point.key))}
@@ -172,40 +293,6 @@ function SpiderChart({
             </View>
           );
         })}
-      </View>
-      <View style={styles.spiderGroupLegend}>
-        <Text style={styles.spiderGroupLegendTitle}>Badge-Gruppen (Phase)</Text>
-        <View style={styles.spiderGroupRow}>
-          {phaseGroups.map(([phase, phaseLabel]) => (
-            <View key={phase} style={styles.spiderGroupChip}>
-              <View
-                style={[
-                  styles.spiderGroupColor,
-                  {
-                    backgroundColor: PHASE_SPIDER_COLORS[phase as keyof typeof PHASE_SPIDER_COLORS] ?? '#56758e',
-                  },
-                ]}
-              />
-              <Text style={styles.spiderGroupText}>{phaseLabel}</Text>
-            </View>
-          ))}
-        </View>
-        <Text style={styles.spiderGroupLegendTitle}>Finger-Gruppen (außen)</Text>
-        <View style={styles.spiderGroupRow}>
-          {fingerGroups.map(([finger, fingerTitle]) => (
-            <View key={finger} style={styles.spiderGroupChip}>
-              <View
-                style={[
-                  styles.spiderGroupColor,
-                  {
-                    backgroundColor: FINGER_SPIDER_COLORS[finger as keyof typeof FINGER_SPIDER_COLORS],
-                  },
-                ]}
-              />
-              <Text style={styles.spiderGroupText}>{fingerTitle}</Text>
-            </View>
-          ))}
-        </View>
       </View>
       {selectedPoint ? (
         <Text style={styles.spiderSelection}>

@@ -565,6 +565,19 @@ export const styles = StyleSheet.create({
     color: '#587086',
     fontWeight: '600',
   },
+  spiderRingSegment: {
+    position: 'absolute',
+    borderRadius: 999,
+  },
+  spiderRingLabelWrap: {
+    position: 'absolute',
+  },
+  spiderRingLabel: {
+    textAlign: 'center',
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
   spiderAxis: {
     position: 'absolute',
     width: 78,
