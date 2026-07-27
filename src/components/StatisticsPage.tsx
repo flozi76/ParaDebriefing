@@ -22,8 +22,11 @@ const SPIDER_PHASE_RING_THICKNESS = 8;
 const SPIDER_FINGER_RING_RADIUS = SPIDER_RADIUS + 28;
 const SPIDER_FINGER_RING_THICKNESS = 14;
 const SPIDER_RING_SEGMENT_FILL = 0.92;
+const MIN_SPIDER_RING_SEGMENT_LENGTH = 8;
 const SPIDER_GROUP_LABEL_MIN_WIDTH = 42;
 const SPIDER_GROUP_LABEL_MAX_WIDTH = 82;
+const SPIDER_GROUP_LABEL_WIDTH_SCALE = 0.65;
+const SPIDER_GROUP_LABEL_HALF_HEIGHT = 8;
 const FINGER_SPIDER_COLORS = {
   thumb: '#4cae5c',
   index: '#d89b2b',
@@ -86,6 +89,7 @@ const getSpiderGroupRuns = (
   });
 
   if (runs.length > 1 && runs[0].key === runs[runs.length - 1].key) {
+    // Keep wrap-around groups contiguous on the circular chart (end + start of the ring).
     runs[runs.length - 1].length += runs[0].length;
     runs.shift();
   }
@@ -116,7 +120,7 @@ function SpiderChart({
         {points.map((point, index) => {
           const angle = -Math.PI / 2 + index * angleStep;
           const segmentLength = Math.max(
-            8,
+            MIN_SPIDER_RING_SEGMENT_LENGTH,
             SPIDER_PHASE_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
           );
           const segmentPosition = getSpiderRingSegmentPosition(
@@ -147,7 +151,7 @@ function SpiderChart({
         {points.map((point, index) => {
           const angle = -Math.PI / 2 + index * angleStep;
           const segmentLength = Math.max(
-            8,
+            MIN_SPIDER_RING_SEGMENT_LENGTH,
             SPIDER_FINGER_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
           );
           const segmentPosition = getSpiderRingSegmentPosition(
@@ -181,11 +185,12 @@ function SpiderChart({
             SPIDER_GROUP_LABEL_MAX_WIDTH,
             Math.max(
               SPIDER_GROUP_LABEL_MIN_WIDTH,
-              group.length * SPIDER_FINGER_RING_RADIUS * angleStep * 0.65,
+              group.length * SPIDER_FINGER_RING_RADIUS * angleStep * SPIDER_GROUP_LABEL_WIDTH_SCALE,
             ),
           );
           const left = SPIDER_CENTER + Math.cos(angle) * SPIDER_FINGER_RING_RADIUS - width / 2;
-          const top = SPIDER_CENTER + Math.sin(angle) * SPIDER_FINGER_RING_RADIUS - 8;
+          const top =
+            SPIDER_CENTER + Math.sin(angle) * SPIDER_FINGER_RING_RADIUS - SPIDER_GROUP_LABEL_HALF_HEIGHT;
 
           return (
             <View
