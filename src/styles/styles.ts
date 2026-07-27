@@ -607,12 +607,31 @@ export const styles = StyleSheet.create({
   spiderLegendRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 12,
   },
-  spiderLegendLabel: {
+  spiderLegendLabelGroup: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  spiderLegendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+  },
+  spiderLegendTextWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  spiderLegendLabel: {
     fontSize: 14,
     color: '#415a73',
+  },
+  spiderLegendMeta: {
+    fontSize: 12,
+    color: '#587086',
   },
   spiderLegendValue: {
     fontSize: 14,

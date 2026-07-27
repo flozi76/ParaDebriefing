@@ -17,6 +17,13 @@ const SPIDER_CENTER = SPIDER_SIZE / 2;
 const SPIDER_AXIS_RADIUS = SPIDER_RADIUS / 2;
 const MIN_MONTH_BAR_HEIGHT = 24;
 const MONTH_BAR_HEIGHT_RANGE = 96;
+const FINGER_SPIDER_COLORS = {
+  thumb: '#4cae5c',
+  index: '#d89b2b',
+  middle: '#cb4f5c',
+  ring: '#6d6ed9',
+  little: '#2f98b0',
+} as const;
 
 const getSpiderAxisPosition = (angle: number) => ({
   left: SPIDER_CENTER + Math.cos(angle) * SPIDER_AXIS_RADIUS - SPIDER_AXIS_RADIUS,
@@ -52,8 +59,7 @@ function SpiderChart({
           const axisPosition = getSpiderAxisPosition(angle);
           const dotLeft = SPIDER_CENTER + Math.cos(angle) * SPIDER_RADIUS * point.ratio - 7;
           const dotTop = SPIDER_CENTER + Math.sin(angle) * SPIDER_RADIUS * point.ratio - 7;
-          const labelLeft = SPIDER_CENTER + Math.cos(angle) * (SPIDER_RADIUS + 24) - 32;
-          const labelTop = SPIDER_CENTER + Math.sin(angle) * (SPIDER_RADIUS + 24) - 10;
+          const pointColor = FINGER_SPIDER_COLORS[point.finger];
 
           return (
             <View key={point.key}>
@@ -61,6 +67,7 @@ function SpiderChart({
                 style={[
                   styles.spiderAxis,
                   {
+                    backgroundColor: pointColor,
                     left: axisPosition.left,
                     top: axisPosition.top,
                     transform: [{ rotate: `${angle}rad` }],
@@ -71,22 +78,12 @@ function SpiderChart({
                 style={[
                   styles.spiderPoint,
                   {
+                    backgroundColor: pointColor,
                     left: dotLeft,
                     top: dotTop,
                   },
                 ]}
               />
-              <View
-                style={[
-                  styles.spiderLabel,
-                  {
-                    left: labelLeft,
-                    top: labelTop,
-                  },
-                ]}
-              >
-                <Text style={styles.spiderLabelText}>{point.label}</Text>
-              </View>
             </View>
           );
         })}
@@ -97,10 +94,19 @@ function SpiderChart({
       <View style={styles.spiderLegend}>
         {points.map((point) => (
           <View key={point.key} style={styles.spiderLegendRow}>
-            <Text style={styles.spiderLegendLabel}>{point.label}</Text>
-            <Text style={styles.spiderLegendValue}>
-              {point.count} / {Math.round(point.ratio * 100)}%
-            </Text>
+            <View style={styles.spiderLegendLabelGroup}>
+              <View
+                style={[
+                  styles.spiderLegendDot,
+                  { backgroundColor: FINGER_SPIDER_COLORS[point.finger] },
+                ]}
+              />
+              <View style={styles.spiderLegendTextWrap}>
+                <Text style={styles.spiderLegendLabel}>{point.label}</Text>
+                <Text style={styles.spiderLegendMeta}>{point.fingerTitle}</Text>
+              </View>
+            </View>
+            <Text style={styles.spiderLegendValue}>{point.count}</Text>
           </View>
         ))}
       </View>
@@ -275,7 +281,7 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
           <View style={styles.card}>
             <View style={styles.statisticsCardHeader}>
               <Text style={styles.sectionTitle}>Radar-Profil</Text>
-              <Text style={styles.statisticsCaption}>Wie oft taucht jeder Finger in den Treffer-Flügen auf?</Text>
+              <Text style={styles.statisticsCaption}>Wie oft tauchen die ausgewählten Badges auf?</Text>
             </View>
             <SpiderChart points={stats.spiderPoints} />
           </View>
