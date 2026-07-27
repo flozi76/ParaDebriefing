@@ -66,8 +66,10 @@ export function useDebriefing() {
   }, [entries, hasLoadedEntries]);
 
   const isComplete = useMemo(
-    () => Object.values(form).every((value) => value.trim().length > 0),
-    [form],
+    () => (Object.keys(form) as FingerKey[]).every(
+      (key) => form[key].trim().length > 0 || categories[key].length > 0,
+    ),
+    [form, categories],
   );
 
   const updateField = (field: FingerKey, value: string) => {
@@ -243,7 +245,7 @@ export function useDebriefing() {
 
   const saveDebrief = () => {
     if (!isComplete) {
-      setErrorMessage('Bitte alle fünf Finger ausfüllen.');
+      setErrorMessage('Bitte alle fünf Finger ausfüllen (Text oder Badge).');
       return;
     }
 
