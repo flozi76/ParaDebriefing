@@ -20,8 +20,10 @@ export type StatisticsSnapshot = {
   topPhaseLabel: string;
   topCategoryLabel: string;
   spiderPoints: Array<{
-    key: FingerKey;
+    key: string;
     label: string;
+    finger: FingerKey;
+    fingerTitle: string;
     count: number;
     ratio: number;
   }>;
@@ -135,19 +137,6 @@ export const computeStatistics = (
     ),
   );
 
-  const spiderPoints = FINGER_FIELDS.map((field) => {
-    const count = matchedEntries.filter(
-      (entry) => (entry.categories?.[field.key] ?? []).length > 0,
-    ).length;
-
-    return {
-      key: field.key,
-      label: field.title,
-      count,
-      ratio: matchedEntries.length === 0 ? 0 : count / matchedEntries.length,
-    };
-  });
-
   const monthCounts = new Map<string, { label: string; count: number }>();
   for (const hit of scopedHits) {
     const current = monthCounts.get(hit.month.key);
@@ -179,6 +168,27 @@ export const computeStatistics = (
   const topPhase = [...phaseCounts.entries()]
     .sort((left, right) => right[1] - left[1])
     .at(0);
+
+  const spiderCategories = CATEGORY_OPTIONS.filter(
+    (option) =>
+      scopeFingers.includes(option.finger) &&
+      (!hasExplicitCategoryFilter || selectedIds.has(option.id)),
+  );
+  const spiderMaxCount = Math.max(
+    ...spiderCategories.map((option) => categoryCounts.get(option.id) ?? 0),
+    1,
+  );
+  const spiderPoints = spiderCategories.map((option) => {
+    const count = categoryCounts.get(option.id) ?? 0;
+    return {
+      key: option.id,
+      label: option.label,
+      finger: option.finger,
+      fingerTitle: option.fingerTitle,
+      count,
+      ratio: count / spiderMaxCount,
+    };
+  });
 
   return {
     totalEntries: entries.length,
