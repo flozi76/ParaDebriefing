@@ -281,7 +281,7 @@ function SpiderChart({
         <Text style={styles.spiderSelectionHint}>Tippe auf einen Punkt, um das Badge hervorzuheben.</Text>
       )}
       <View style={styles.spiderGroupLegend}>
-        <Text style={styles.spiderGroupLegendTitle}>Finger-Gruppen</Text>
+        <Text style={styles.spiderGroupLegendTitle}>Fingergruppen</Text>
         <View style={styles.spiderGroupRow}>
           {fingerGroupRuns.map((group) => (
             <View key={`finger-group-chip-${group.key}`} style={styles.spiderGroupChip}>
