@@ -22,8 +22,8 @@ const SPIDER_PHASE_RING_THICKNESS = 8;
 const SPIDER_FINGER_RING_RADIUS = SPIDER_RADIUS + 28;
 const SPIDER_FINGER_RING_THICKNESS = 16;
 const SPIDER_RING_SEGMENT_FILL = 0.92;
+const SPIDER_FINGER_RING_SEGMENT_FILL = 0.84;
 const MIN_SPIDER_RING_SEGMENT_LENGTH = 8;
-const SPIDER_GROUP_MIN_PILL_WIDTH = 44;
 const DEFAULT_SPIDER_RING_COLOR = '#56758e';
 const FINGER_SPIDER_COLORS = {
   thumb: '#4cae5c',
@@ -63,8 +63,6 @@ const getSpiderRingSegmentPosition = (
   left: SPIDER_CENTER + Math.cos(angle) * radius - segmentLength / 2,
   top: SPIDER_CENTER + Math.sin(angle) * radius - thickness / 2,
 });
-
-const normalizeRingIndex = (index: number, size: number) => ((index % size) + size) % size;
 
 const getSpiderGroupRuns = (
   points: SpiderPoint[],
@@ -121,6 +119,10 @@ function SpiderChart({
       MIN_SPIDER_RING_SEGMENT_LENGTH,
       SPIDER_PHASE_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
     ),
+    fingerSegmentLength: Math.max(
+      MIN_SPIDER_RING_SEGMENT_LENGTH,
+      SPIDER_FINGER_RING_RADIUS * angleStep * SPIDER_FINGER_RING_SEGMENT_FILL,
+    ),
   }));
 
   return (
@@ -153,53 +155,31 @@ function SpiderChart({
             />
           );
         })}
-        {fingerGroupRuns.map((group) => {
-          // `(length - 1) / 2` yields the segment midpoint (including half-steps for even spans).
-          const centerIndex = normalizeRingIndex(
-            group.startIndex + (group.length - 1) / 2,
-            points.length,
-          );
-          const centerAngle = -Math.PI / 2 + centerIndex * angleStep;
-          const groupWidth = Math.max(
-            SPIDER_GROUP_MIN_PILL_WIDTH,
-            group.length * SPIDER_FINGER_RING_RADIUS * angleStep * SPIDER_RING_SEGMENT_FILL,
-          );
-          const pillPosition = getSpiderRingSegmentPosition(
-            centerAngle,
+        {ringSegments.map(({ point, angle, fingerSegmentLength }) => {
+          const segmentPosition = getSpiderRingSegmentPosition(
+            angle,
             SPIDER_FINGER_RING_RADIUS,
-            groupWidth,
+            fingerSegmentLength,
             SPIDER_FINGER_RING_THICKNESS,
           );
-          const pillAngle = centerAngle + Math.PI / 2;
-          const color =
-            FINGER_SPIDER_COLORS[group.key as keyof typeof FINGER_SPIDER_COLORS] ??
-            DEFAULT_SPIDER_RING_COLOR;
 
           return (
             <View
-              key={`finger-group-${group.key}`}
+              key={`finger-ring-${point.key}`}
               style={[
-                styles.spiderGroupPill,
+                styles.spiderRingSegment,
                 {
-                  width: groupWidth,
+                  width: fingerSegmentLength,
                   height: SPIDER_FINGER_RING_THICKNESS,
-                  left: pillPosition.left,
-                  top: pillPosition.top,
-                  backgroundColor: color,
-                  transform: [{ rotate: `${pillAngle}rad` }],
+                  left: segmentPosition.left,
+                  top: segmentPosition.top,
+                  backgroundColor:
+                    FINGER_SPIDER_COLORS[point.finger as keyof typeof FINGER_SPIDER_COLORS] ??
+                    DEFAULT_SPIDER_RING_COLOR,
+                  transform: [{ rotate: `${angle + Math.PI / 2}rad` }],
                 },
               ]}
-            >
-              <Text
-                style={[
-                  styles.spiderGroupPillLabel,
-                  { transform: [{ rotate: `${-pillAngle}rad` }] },
-                ]}
-                numberOfLines={1}
-              >
-                {group.label}
-              </Text>
-            </View>
+            />
           );
         })}
         {SPIDER_SCALE_STEPS.map((step) => {
@@ -300,6 +280,26 @@ function SpiderChart({
       ) : (
         <Text style={styles.spiderSelectionHint}>Tippe auf einen Punkt, um das Badge hervorzuheben.</Text>
       )}
+      <View style={styles.spiderGroupLegend}>
+        <Text style={styles.spiderGroupLegendTitle}>Fingergruppen</Text>
+        <View style={styles.spiderGroupRow}>
+          {fingerGroupRuns.map((group) => (
+            <View key={`finger-group-chip-${group.key}`} style={styles.spiderGroupChip}>
+              <View
+                style={[
+                  styles.spiderGroupColor,
+                  {
+                    backgroundColor:
+                      FINGER_SPIDER_COLORS[group.key as keyof typeof FINGER_SPIDER_COLORS] ??
+                      DEFAULT_SPIDER_RING_COLOR,
+                  },
+                ]}
+              />
+              <Text style={styles.spiderGroupText}>{group.label}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
       <View style={styles.spiderLegend}>
         {points.map((point) => {
           const isSelected = selectedPointKey === point.key;
