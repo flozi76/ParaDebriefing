@@ -50,6 +50,8 @@ function SpiderChart({
                 width: step * 56,
                 height: step * 56,
                 borderRadius: step * 28,
+                left: SPIDER_CENTER - step * 28,
+                top: SPIDER_CENTER - step * 28,
               },
             ]}
           />
@@ -60,6 +62,16 @@ function SpiderChart({
           const dotLeft = SPIDER_CENTER + Math.cos(angle) * SPIDER_RADIUS * point.ratio - 7;
           const dotTop = SPIDER_CENTER + Math.sin(angle) * SPIDER_RADIUS * point.ratio - 7;
           const pointColor = FINGER_SPIDER_COLORS[point.finger];
+
+          const nextIndex = (index + 1) % points.length;
+          const nextPoint = points[nextIndex];
+          const nextAngle = -Math.PI / 2 + nextIndex * ((Math.PI * 2) / points.length);
+          const x1 = SPIDER_CENTER + Math.cos(angle) * SPIDER_RADIUS * point.ratio;
+          const y1 = SPIDER_CENTER + Math.sin(angle) * SPIDER_RADIUS * point.ratio;
+          const x2 = SPIDER_CENTER + Math.cos(nextAngle) * SPIDER_RADIUS * nextPoint.ratio;
+          const y2 = SPIDER_CENTER + Math.sin(nextAngle) * SPIDER_RADIUS * nextPoint.ratio;
+          const lineAngle = Math.atan2(y2 - y1, x2 - x1);
+          const lineLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
 
           return (
             <View key={point.key}>
@@ -74,6 +86,19 @@ function SpiderChart({
                   },
                 ]}
               />
+              {points.length > 1 && (
+                <View
+                  style={[
+                    styles.spiderLine,
+                    {
+                      width: lineLength,
+                      left: (x1 + x2) / 2 - lineLength / 2,
+                      top: (y1 + y2) / 2 - 1,
+                      transform: [{ rotate: `${lineAngle}rad` }],
+                    },
+                  ]}
+                />
+              )}
               <View
                 style={[
                   styles.spiderPoint,
