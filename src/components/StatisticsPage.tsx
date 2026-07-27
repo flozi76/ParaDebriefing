@@ -24,6 +24,16 @@ const FINGER_SPIDER_COLORS = {
   ring: '#6d6ed9',
   little: '#2f98b0',
 } as const;
+const PHASE_SPIDER_COLORS = {
+  preparation: '#56758e',
+  launch: '#2e8b57',
+  climb: '#2f7ec6',
+  cross_country: '#9166cc',
+  landing: '#c9772a',
+} as const;
+const SPIDER_SCALE_STEPS = [0.25, 0.5, 0.75, 1];
+const SPIDER_META_SEPARATOR = ' · ';
+const uniqueByGroupKey = (pairs: Array<[string, string]>) => [...new Map(pairs).entries()];
 
 const getSpiderAxisPosition = (angle: number) => ({
   left: SPIDER_CENTER + Math.cos(angle) * SPIDER_AXIS_RADIUS - SPIDER_AXIS_RADIUS,
@@ -38,9 +48,43 @@ function SpiderChart({
 }: {
   points: ReturnType<typeof computeStatistics>['spiderPoints'];
 }) {
+  const [selectedPointKey, setSelectedPointKey] = useState<string | null>(null);
+  const maxSpiderCount = Math.max(...points.map((point) => point.count), 1);
+  const selectedPoint = points.find((point) => point.key === selectedPointKey) ?? null;
+  const phaseGroups = uniqueByGroupKey(points.map((point) => [point.phase, point.phaseLabel]));
+  const fingerGroups = uniqueByGroupKey(points.map((point) => [point.finger, point.fingerTitle]));
+
   return (
     <View style={styles.spiderCard}>
       <View style={styles.spiderChart}>
+        {SPIDER_SCALE_STEPS.map((step) => {
+          const size = SPIDER_RADIUS * 2 * step;
+          return (
+            <View
+              key={step}
+              style={[
+                styles.spiderScaleRing,
+                {
+                  width: size,
+                  height: size,
+                  left: SPIDER_CENTER - size / 2,
+                  top: SPIDER_CENTER - size / 2,
+                },
+              ]}
+            />
+          );
+        })}
+        {SPIDER_SCALE_STEPS.map((step) => (
+          <Text
+            key={`scale-${step}`}
+            style={[
+              styles.spiderScaleLabel,
+              { top: SPIDER_CENTER - SPIDER_RADIUS * step - 8 },
+            ]}
+          >
+            {Math.round(maxSpiderCount * step)}
+          </Text>
+        ))}
         {points.map((point, index) => {
           const angle = -Math.PI / 2 + index * ((Math.PI * 2) / points.length);
           const axisPosition = getSpiderAxisPosition(angle);
@@ -57,6 +101,12 @@ function SpiderChart({
           const y2 = SPIDER_CENTER + Math.sin(nextAngle) * SPIDER_RADIUS * nextPoint.ratio;
           const lineAngle = Math.atan2(y2 - y1, x2 - x1);
           const lineLength = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+          const phaseDotLeft = SPIDER_CENTER + Math.cos(angle) * (SPIDER_RADIUS + 12) - 4;
+          const phaseDotTop = SPIDER_CENTER + Math.sin(angle) * (SPIDER_RADIUS + 12) - 4;
+          const fingerDotLeft = SPIDER_CENTER + Math.cos(angle) * (SPIDER_RADIUS + 24) - 4;
+          const fingerDotTop = SPIDER_CENTER + Math.sin(angle) * (SPIDER_RADIUS + 24) - 4;
+          const isSelected = selectedPointKey === point.key;
+          const isDimmed = selectedPointKey !== null && selectedPointKey !== point.key;
 
           return (
             <View key={point.key}>
@@ -64,7 +114,7 @@ function SpiderChart({
                 style={[
                   styles.spiderAxis,
                   {
-                    backgroundColor: pointColor,
+                    backgroundColor: isSelected ? '#12304a' : pointColor,
                     left: axisPosition.left,
                     top: axisPosition.top,
                     transform: [{ rotate: `${angle}rad` }],
@@ -79,6 +129,7 @@ function SpiderChart({
                       width: lineLength,
                       left: (x1 + x2) / 2 - lineLength / 2,
                       top: (y1 + y2) / 2 - 1,
+                      opacity: isDimmed ? 0.4 : 1,
                       transform: [{ rotate: `${lineAngle}rad` }],
                     },
                   ]}
@@ -86,36 +137,114 @@ function SpiderChart({
               )}
               <View
                 style={[
+                  styles.spiderOuterDot,
+                  {
+                    backgroundColor:
+                      PHASE_SPIDER_COLORS[point.phase as keyof typeof PHASE_SPIDER_COLORS] ?? '#56758e',
+                    left: phaseDotLeft,
+                    top: phaseDotTop,
+                  },
+                ]}
+              />
+              <View
+                style={[
+                  styles.spiderOuterDot,
+                  {
+                    backgroundColor: pointColor,
+                    left: fingerDotLeft,
+                    top: fingerDotTop,
+                  },
+                ]}
+              />
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setSelectedPointKey((current) => (current === point.key ? null : point.key))}
+                style={[
                   styles.spiderPoint,
                   {
                     backgroundColor: pointColor,
                     left: dotLeft,
                     top: dotTop,
                   },
+                  isSelected && styles.spiderPointSelected,
                 ]}
               />
             </View>
           );
         })}
       </View>
-      <View style={styles.spiderLegend}>
-        {points.map((point) => (
-          <View key={point.key} style={styles.spiderLegendRow}>
-            <View style={styles.spiderLegendLabelGroup}>
+      <View style={styles.spiderGroupLegend}>
+        <Text style={styles.spiderGroupLegendTitle}>Badge-Gruppen (Phase)</Text>
+        <View style={styles.spiderGroupRow}>
+          {phaseGroups.map(([phase, phaseLabel]) => (
+            <View key={phase} style={styles.spiderGroupChip}>
               <View
                 style={[
-                  styles.spiderLegendDot,
-                  { backgroundColor: FINGER_SPIDER_COLORS[point.finger] },
+                  styles.spiderGroupColor,
+                  {
+                    backgroundColor: PHASE_SPIDER_COLORS[phase as keyof typeof PHASE_SPIDER_COLORS] ?? '#56758e',
+                  },
                 ]}
               />
-              <View style={styles.spiderLegendTextWrap}>
-                <Text style={styles.spiderLegendLabel}>{point.label}</Text>
-                <Text style={styles.spiderLegendMeta}>{point.fingerTitle}</Text>
-              </View>
+              <Text style={styles.spiderGroupText}>{phaseLabel}</Text>
             </View>
-            <Text style={styles.spiderLegendValue}>{point.count}</Text>
-          </View>
-        ))}
+          ))}
+        </View>
+        <Text style={styles.spiderGroupLegendTitle}>Finger-Gruppen (außen)</Text>
+        <View style={styles.spiderGroupRow}>
+          {fingerGroups.map(([finger, fingerTitle]) => (
+            <View key={finger} style={styles.spiderGroupChip}>
+              <View
+                style={[
+                  styles.spiderGroupColor,
+                  {
+                    backgroundColor: FINGER_SPIDER_COLORS[finger as keyof typeof FINGER_SPIDER_COLORS],
+                  },
+                ]}
+              />
+              <Text style={styles.spiderGroupText}>{fingerTitle}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+      {selectedPoint ? (
+        <Text style={styles.spiderSelection}>
+          Ausgewählt: {selectedPoint.label} ({selectedPoint.count})
+        </Text>
+      ) : (
+        <Text style={styles.spiderSelectionHint}>Tippe auf einen Punkt, um das Badge hervorzuheben.</Text>
+      )}
+      <View style={styles.spiderLegend}>
+        {points.map((point) => {
+          const isSelected = selectedPointKey === point.key;
+
+          return (
+            <Pressable
+              key={point.key}
+              accessibilityRole="button"
+              onPress={() => setSelectedPointKey((current) => (current === point.key ? null : point.key))}
+              style={[styles.spiderLegendRow, isSelected && styles.spiderLegendRowSelected]}
+            >
+              <View style={styles.spiderLegendLabelGroup}>
+                <View
+                  style={[
+                    styles.spiderLegendDot,
+                    { backgroundColor: FINGER_SPIDER_COLORS[point.finger] },
+                  ]}
+                />
+                <View style={styles.spiderLegendTextWrap}>
+                  <Text style={styles.spiderLegendLabel}>{point.label}</Text>
+                  <Text style={styles.spiderLegendMeta}>
+                    {[point.phaseLabel, point.fingerTitle]
+                      .filter((value) => typeof value === 'string' && value.trim().length > 0)
+                      .join(SPIDER_META_SEPARATOR)}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.spiderLegendValue}>{point.count}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
