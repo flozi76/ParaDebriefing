@@ -171,7 +171,7 @@ function SpiderChart({
                   height: SPIDER_FINGER_RING_THICKNESS,
                   left: segmentPosition.left,
                   top: segmentPosition.top,
-                  backgroundColor: FINGER_SPIDER_COLORS[point.finger],
+                  backgroundColor: FINGER_SPIDER_COLORS[point.finger] ?? '#56758e',
                   transform: [{ rotate: `${angle + Math.PI / 2}rad` }],
                 },
               ]}
@@ -179,7 +179,9 @@ function SpiderChart({
           );
         })}
         {fingerGroupRuns.map((group) => {
-          const centerIndex = group.startIndex + (group.length - 1) / 2;
+          // Fractional offsets intentionally center labels between segment boundaries for even spans.
+          const centerIndex =
+            (group.startIndex + (group.length - 1) / 2 + points.length) % points.length;
           const angle = -Math.PI / 2 + centerIndex * angleStep;
           const width = Math.min(
             SPIDER_GROUP_LABEL_MAX_WIDTH,
