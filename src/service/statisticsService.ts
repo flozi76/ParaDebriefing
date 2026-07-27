@@ -188,7 +188,7 @@ export const computeStatistics = (
       count,
       ratio: count / spiderMaxCount,
     };
-  });
+  }).filter((point) => point.count > 0);
 
   return {
     totalEntries: entries.length,
