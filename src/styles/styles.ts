@@ -549,14 +549,8 @@ export const styles = StyleSheet.create({
   spiderChart: {
     width: 240,
     height: 240,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: 'center',
     position: 'relative',
-  },
-  spiderRing: {
-    position: 'absolute',
-    borderWidth: 1,
-    borderColor: '#d6e2ee',
   },
   spiderAxis: {
     position: 'absolute',
@@ -579,32 +573,6 @@ export const styles = StyleSheet.create({
     backgroundColor: '#0f6cbd',
     borderWidth: 2,
     borderColor: '#ffffff',
-  },
-  spiderLabel: {
-    position: 'absolute',
-    width: 64,
-    alignItems: 'center',
-  },
-  spiderLabelText: {
-    fontSize: 12,
-    color: '#415a73',
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  spiderCenterBadge: {
-    width: 54,
-    height: 54,
-    borderRadius: 999,
-    backgroundColor: '#edf6ff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#95c6ef',
-  },
-  spiderCenterBadgeText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0f4c81',
   },
   spiderLegend: {
     width: '100%',
