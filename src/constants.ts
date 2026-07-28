@@ -35,6 +35,8 @@ export const FINGER_CATEGORIES: Record<
       { id: 'index.energy_nutrition', label: 'Energiehaushalt / Verpflegung', phase: 'cross_country' },
       { id: 'index.turn_right_more', label: 'Mehr rechts drehen', phase: 'climb' },
       { id: 'index.turn_left_more', label: 'Mehr links drehen', phase: 'climb' },
+      { id: 'index.more_patience', label: 'Mehr Geduld üben', phase: 'climb' },
+      { id: 'index.stay_with_group', label: 'Gruppe nicht verlassen', phase: 'cross_country' },
     ],
   },
   middle: {
@@ -77,6 +79,7 @@ export const FINGER_CATEGORIES: Record<
       { id: 'little.airspace_knowledge', label: 'Luftraumwissen erweitert', phase: 'preparation' },
       { id: 'little.good_right_turn', label: 'Gut rechts gedreht', phase: 'climb' },
       { id: 'little.good_left_turn', label: 'Gut links gedreht', phase: 'climb' },
+      { id: 'little.turbulence_balanced', label: 'Turbulenzen gut ausgeglichen', phase: 'climb' },
     ],
   },
 };
