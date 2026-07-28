@@ -349,6 +349,7 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
 
   const maxMonthCount = Math.max(...stats.monthSeries.map((item) => item.count), 1);
   const maxPhaseCount = Math.max(...stats.phaseSeries.map((item) => item.count), 1);
+  const maxBadgeCount = Math.max(...stats.badgeSeries.map((item) => item.count), 1);
   const selectedCategorySet = new Set(selectedCategoryIds);
   const fingerFilterLabel =
     fingerFilter === 'all'
@@ -399,7 +400,7 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Statistik</Text>
         <Text style={styles.statisticsIntro}>
-          Erster Vorschlag: Filtere nach Finger und Kategorien. Danach zeigen Radar-Profil, Zeitverlauf und Phasenmix, welche Muster sich über deine Flüge abzeichnen.
+          Erster Vorschlag: Filtere nach Finger und Kategorien. Danach zeigen Phasenmix, Badge-Übersicht, Radar-Profil und Zeitverlauf, welche Muster sich über deine Flüge abzeichnen.
         </Text>
       </View>
 
@@ -512,20 +513,49 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
         </View>
       ) : (
         <>
-          <View style={styles.summaryGrid}>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Treffer-Flüge</Text>
-              <Text style={styles.summaryValue}>
-                {stats.matchedEntries} / {stats.totalEntries}
-              </Text>
+          <View style={styles.card}>
+            <View style={styles.statisticsCardHeader}>
+              <Text style={styles.sectionTitle}>Phasenmix</Text>
+              <Text style={styles.statisticsCaption}>Wo häufen sich die markierten Beobachtungen?</Text>
             </View>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Kategorie-Treffer</Text>
-              <Text style={styles.summaryValue}>{stats.scopedHitCount}</Text>
+            <View style={styles.phaseChart}>
+              {stats.phaseSeries.map((item) => (
+                <View key={item.key} style={styles.phaseRow}>
+                  <Text style={styles.phaseLabel}>{item.label}</Text>
+                  <View style={styles.phaseTrack}>
+                    <View
+                      style={[
+                        styles.phaseFill,
+                        { width: `${(item.count / maxPhaseCount) * 100}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.phaseValue}>{item.count}</Text>
+                </View>
+              ))}
             </View>
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Stärkste Phase</Text>
-              <Text style={styles.summaryValueSmall}>{stats.topPhaseLabel}</Text>
+          </View>
+
+          <View style={styles.card}>
+            <View style={styles.statisticsCardHeader}>
+              <Text style={styles.sectionTitle}>Badge-Übersicht</Text>
+              <Text style={styles.statisticsCaption}>Wie oft wurde jedes Badge im aktuellen Filter markiert?</Text>
+            </View>
+            <View style={styles.phaseChart}>
+              {stats.badgeSeries.map((item) => (
+                <View key={item.id} style={styles.phaseRow}>
+                  <Text style={styles.phaseLabel}>{item.label}</Text>
+                  <View style={styles.phaseTrack}>
+                    <View
+                      style={[
+                        styles.phaseFill,
+                        { width: `${(item.count / maxBadgeCount) * 100}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.phaseValue}>{item.count}</Text>
+                </View>
+              ))}
             </View>
           </View>
 
@@ -566,29 +596,6 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
 
           <View style={styles.card}>
             <View style={styles.statisticsCardHeader}>
-              <Text style={styles.sectionTitle}>Phasenmix</Text>
-              <Text style={styles.statisticsCaption}>Wo häufen sich die markierten Beobachtungen?</Text>
-            </View>
-            <View style={styles.phaseChart}>
-              {stats.phaseSeries.map((item) => (
-                <View key={item.key} style={styles.phaseRow}>
-                  <Text style={styles.phaseLabel}>{item.label}</Text>
-                  <View style={styles.phaseTrack}>
-                    <View
-                      style={[
-                        styles.phaseFill,
-                        { width: `${(item.count / maxPhaseCount) * 100}%` },
-                      ]}
-                    />
-                  </View>
-                  <Text style={styles.phaseValue}>{item.count}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.card}>
-            <View style={styles.statisticsCardHeader}>
               <Text style={styles.sectionTitle}>Frische Highlights</Text>
               <Text style={styles.statisticsCaption}>Die häufigsten Kategorien im aktuellen Filter</Text>
             </View>
@@ -608,6 +615,23 @@ export function StatisticsPage({ entries, onCreateEntry }: StatisticsPageProps) 
               </View>
             )}
             <Text style={styles.statisticsFooter}>Häufigste Kategorie aktuell: {stats.topCategoryLabel}</Text>
+          </View>
+
+          <View style={styles.summaryGrid}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Treffer-Flüge</Text>
+              <Text style={styles.summaryValue}>
+                {stats.matchedEntries} / {stats.totalEntries}
+              </Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Kategorie-Treffer</Text>
+              <Text style={styles.summaryValue}>{stats.scopedHitCount}</Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryLabel}>Stärkste Phase</Text>
+              <Text style={styles.summaryValueSmall}>{stats.topPhaseLabel}</Text>
+            </View>
           </View>
         </>
       )}

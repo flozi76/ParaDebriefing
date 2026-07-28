@@ -38,6 +38,12 @@ export type StatisticsSnapshot = {
     label: string;
     count: number;
   }>;
+  badgeSeries: Array<{
+    id: string;
+    label: string;
+    fingerTitle: string;
+    count: number;
+  }>;
   topCategories: Array<{
     id: string;
     label: string;
@@ -194,6 +200,15 @@ export const computeStatistics = (
     };
   }).filter((point) => point.count > 0);
 
+  const badgeSeries = spiderCategories
+    .map((option) => ({
+      id: option.id,
+      label: option.label,
+      fingerTitle: option.fingerTitle,
+      count: categoryCounts.get(option.id) ?? 0,
+    }))
+    .sort((left, right) => right.count - left.count || left.label.localeCompare(right.label));
+
   return {
     totalEntries: entries.length,
     matchedEntries: matchedEntries.length,
@@ -212,6 +227,7 @@ export const computeStatistics = (
       label: PHASE_LABELS[phase],
       count: phaseCounts.get(phase) ?? 0,
     })),
+    badgeSeries,
     topCategories: [...categoryCounts.entries()]
       .sort((left, right) => right[1] - left[1])
       .slice(0, 5)
