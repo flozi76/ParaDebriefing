@@ -14,11 +14,14 @@ import { DebriefDialog } from './src/components/DebriefDialog';
 import { EntryCard } from './src/components/EntryCard';
 import { LocationPickerModal } from './src/components/LocationPickerModal';
 import { StatisticsPage } from './src/components/StatisticsPage';
+import { ViewDialog } from './src/components/ViewDialog';
 import { useDebriefing } from './src/hooks/useDebriefing';
 import { styles } from './src/styles/styles';
+import type { DebriefEntry } from './src/types';
 
 export default function App() {
   const [activePage, setActivePage] = useState<'entries' | 'stats'>('entries');
+  const [viewingEntry, setViewingEntry] = useState<DebriefEntry | null>(null);
   const {
     form,
     categories,
@@ -154,6 +157,7 @@ export default function App() {
                   <EntryCard
                     key={entry.id}
                     entry={entry}
+                    onView={setViewingEntry}
                     onEdit={openEditDialog}
                     onDelete={deleteEntry}
                     onOpenLink={(url) => {
@@ -168,6 +172,18 @@ export default function App() {
           )}
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ViewDialog
+        entry={viewingEntry}
+        onClose={() => setViewingEntry(null)}
+        onEdit={(entry) => {
+          setViewingEntry(null);
+          openEditDialog(entry);
+        }}
+        onOpenLink={(url) => {
+          void openExternalLink(url);
+        }}
+      />
 
       <DebriefDialog
         visible={isDialogVisible}

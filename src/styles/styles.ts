@@ -271,6 +271,39 @@ export const styles = StyleSheet.create({
   pageSwitchButtonTextActive: {
     color: '#12304a',
   },
+  entryActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 999,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonIcon: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  actionButtonLink: {
+    borderColor: '#95c6ef',
+    backgroundColor: '#edf6ff',
+  },
+  actionButtonView: {
+    borderColor: '#95c6ef',
+    backgroundColor: '#edf6ff',
+  },
+  actionButtonEdit: {
+    borderColor: '#c7d7e7',
+    backgroundColor: '#ffffff',
+  },
+  actionButtonDelete: {
+    borderColor: '#f5c6cb',
+    backgroundColor: '#fff5f5',
+  },
   editButton: {
     borderRadius: 999,
     borderWidth: 1,
@@ -296,6 +329,73 @@ export const styles = StyleSheet.create({
     color: '#b42318',
     fontSize: 14,
     fontWeight: '700',
+  },
+  viewMetaCard: {
+    borderWidth: 1,
+    borderColor: '#d6e2ee',
+    borderRadius: 14,
+    padding: 14,
+    gap: 8,
+    backgroundColor: '#f9fbfd',
+  },
+  viewMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  viewMetaLabel: {
+    fontSize: 16,
+  },
+  viewMetaValue: {
+    flex: 1,
+    fontSize: 14,
+    color: '#1f4668',
+    fontWeight: '600',
+  },
+  viewLinkText: {
+    fontSize: 14,
+    color: '#0f6cbd',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  viewFieldGroup: {
+    gap: 8,
+  },
+  viewFieldContent: {
+    gap: 8,
+  },
+  viewChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  viewChip: {
+    borderWidth: 1,
+    borderColor: '#0f6cbd',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: '#edf6ff',
+  },
+  viewChipText: {
+    fontSize: 12,
+    color: '#0f4c81',
+    fontWeight: '600',
+  },
+  viewResponseText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#17324b',
+    borderWidth: 1,
+    borderColor: '#d6e2ee',
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: '#f9fbfd',
+  },
+  viewEmptyField: {
+    fontSize: 14,
+    color: '#7a8da3',
+    fontStyle: 'italic',
   },
   modalOverlay: {
     flex: 1,
