@@ -1,6 +1,6 @@
 import type { GpsCoords } from '../types';
 
-export const generateMapHtml = (lat: number, lon: number): string =>
+export const generateMapHtml = (lat: number, lon: number, showMarker = false): string =>
   `<!DOCTYPE html>
 <html>
 <head>
@@ -12,19 +12,40 @@ export const generateMapHtml = (lat: number, lon: number): string =>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body, html { width: 100%; height: 100%; overflow: hidden; }
     #map { width: 100%; height: 100%; }
+    #locate-btn {
+      position: absolute;
+      bottom: 24px;
+      right: 12px;
+      z-index: 1000;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid rgba(0,0,0,0.25);
+      font-size: 22px;
+      line-height: 36px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
+  <button id="locate-btn" title="Aktueller Standort">⊙</button>
   <script>
     var map = L.map('map', { center: [${lat}, ${lon}], zoom: 13 });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '\\u00a9 OpenStreetMap contributors',
       maxZoom: 19
     }).addTo(map);
+    ${showMarker ? `L.marker([${lat}, ${lon}]).addTo(map);` : ''}
     map.on('moveend', function() {
       var c = map.getCenter();
       window.ReactNativeWebView.postMessage(JSON.stringify({ lat: c.lat, lon: c.lng }));
+    });
+    document.getElementById('locate-btn').addEventListener('click', function() {
+      window.ReactNativeWebView.postMessage(JSON.stringify({ action: 'requestCurrentLocation' }));
     });
     window.ReactNativeWebView.postMessage(JSON.stringify({ lat: ${lat}, lon: ${lon} }));
   </script>

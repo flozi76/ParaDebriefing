@@ -63,6 +63,7 @@ export const normalizeEntry = (entry: DebriefEntry): DebriefEntry => {
         entry.meta?.flightTime ?? parsedDateTime?.flightTime ?? fallbackMeta.flightTime,
       location: entry.meta?.location ?? fallbackMeta.location,
       externalLink: entry.meta?.externalLink ?? '',
+      gpsCoords: entry.meta?.gpsCoords,
     },
     categories: {
       thumb: entry.categories?.thumb ?? fallbackCategories.thumb,
@@ -98,4 +99,5 @@ export const trimMetaForm = (
   flightTime: meta.flightTime.trim(),
   location: meta.location.trim() || DEFAULT_LOCATION,
   externalLink: meta.externalLink.trim(),
+  gpsCoords: meta.gpsCoords,
 });
