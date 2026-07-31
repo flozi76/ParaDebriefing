@@ -11,6 +11,7 @@ export type DebriefMetaForm = {
   flightTime: string;
   location: string;
   externalLink: string;
+  gpsCoords?: GpsCoords;
 };
 
 export type DebriefEntry = {

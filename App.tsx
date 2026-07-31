@@ -30,6 +30,7 @@ export default function App() {
     isEditing,
     isLocationPickerVisible,
     locationPickerCoords,
+    hasStoredLocation,
     isLoadingLocation,
     showPicker,
     pickerStep,
@@ -193,6 +194,7 @@ export default function App() {
 
       <LocationPickerModal
         initialCoords={locationPickerCoords}
+        hasStoredLocation={hasStoredLocation}
         onCancel={closeLocationPicker}
         onConfirm={handleLocationPickerConfirm}
         visible={isLocationPickerVisible}

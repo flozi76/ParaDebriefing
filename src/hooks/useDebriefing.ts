@@ -127,6 +127,8 @@ export function useDebriefing() {
           ...current,
           location:
             current.location === DEFAULT_LOCATION ? name : current.location,
+          gpsCoords:
+            current.location === DEFAULT_LOCATION ? { lat, lon } : current.gpsCoords,
         }));
       }
     } catch {} finally {
@@ -151,9 +153,13 @@ export function useDebriefing() {
     setCategories(entry.categories ?? createEmptyCategories());
     setMetaForm(entry.meta);
     setErrorMessage('');
-    setLocationPickerCoords(FALLBACK_COORDS);
+    setLocationPickerCoords(entry.meta.gpsCoords ?? FALLBACK_COORDS);
     setIsDialogVisible(true);
-    void fetchGpsForDialog(false);
+    const locationAlreadySet =
+      !!entry.meta.location && entry.meta.location !== DEFAULT_LOCATION;
+    if (!locationAlreadySet) {
+      void fetchGpsForDialog(true);
+    }
   };
 
   const openDateTimePicker = () => {
@@ -194,9 +200,13 @@ export function useDebriefing() {
     setLocationPickerCoords(coords);
     try {
       const name = await reverseGeocode(coords.lat, coords.lon);
-      updateMetaField('location', name);
+      setMetaForm((current) => ({ ...current, location: name, gpsCoords: coords }));
     } catch {
-      updateMetaField('location', `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`);
+      setMetaForm((current) => ({
+        ...current,
+        location: `${coords.lat.toFixed(4)}, ${coords.lon.toFixed(4)}`,
+        gpsCoords: coords,
+      }));
     } finally {
       setIsLoadingLocation(false);
     }
@@ -278,6 +288,7 @@ export function useDebriefing() {
     isEditing: editingEntryId !== null,
     isLocationPickerVisible,
     locationPickerCoords,
+    hasStoredLocation: !!metaForm.gpsCoords,
     isLoadingLocation,
     showPicker,
     pickerStep,

@@ -841,6 +841,9 @@ export const styles = StyleSheet.create({
     borderTopColor: '#c7d7e7',
     backgroundColor: '#eef5fb',
   },
+  locationPickerFooterAndroid: {
+    paddingBottom: 40,
+  },
   coordsText: {
     fontSize: 13,
     color: '#415a73',
